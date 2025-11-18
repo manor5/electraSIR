@@ -13,7 +13,7 @@ import {
   Button,
   TextField,
 } from '@mui/material';
-import { districts, constituencies } from '@/app/utils/preConfiguredData';
+import { districts, constituencies, genders } from '@/app/utils/preConfiguredData';
 import { useState, useEffect } from 'react';
 import TamilTransliteratorInput from '@/app/components/TamilTransliterator';
 
@@ -31,16 +31,22 @@ type SubmitData = {
   elector: {
     name: string;
     nameEnglish: string;
+    boothNumber: string;
+    gender: string;
     age: string;
   };
   relation: {
     name: string;
     nameEnglish: string;
+    boothNumber: string;
+    gender: string;
     age: string;
   };
   relationOfRelation: {
     name: string;
     nameEnglish: string;
+    boothNumber: string;
+    gender: string;
     age: string;
   };
 };
@@ -60,18 +66,24 @@ export default function DivisionPage() {
   // Elector details
   const [electorName, setElectorName] = useState('');
   const [electorNameEnglish, setElectorNameEnglish] = useState('');
+  const [electorBoothNumber, setElectorBoothNumber] = useState('');
+  const [electorGender, setElectorGender] = useState('');
   const [yearOfBirth, setYearOfBirth] = useState('');
   const [age, setAge] = useState('');
 
   // Relation details
   const [relationName, setRelationName] = useState('');
   const [relationNameEnglish, setRelationNameEnglish] = useState('');
+  const [relationBoothNumber, setRelationBoothNumber] = useState('');
+  const [relationGender, setRelationGender] = useState('');
   const [relationYearOfBirth, setRelationYearOfBirth] = useState('');
   const [relationAge, setRelationAge] = useState('');
 
   // Relation of Relation details
   const [relationOfRelationName, setRelationOfRelationName] = useState('');
   const [relationOfRelationNameEnglish, setRelationOfRelationNameEnglish] = useState('');
+  const [relationOfRelationBoothNumber, setRelationOfRelationBoothNumber] = useState('');
+  const [relationOfRelationGender, setRelationOfRelationGender] = useState('');
   const [relationOfRelationYearOfBirth, setRelationOfRelationYearOfBirth] = useState('');
   const [relationOfRelationAge, setRelationOfRelationAge] = useState('');
 
@@ -163,16 +175,22 @@ export default function DivisionPage() {
     // Clear all form fields
     setElectorName('');
     setElectorNameEnglish('');
+    setElectorBoothNumber('');
+    setElectorGender('');
     setYearOfBirth('');
     setAge('');
     
     setRelationName('');
     setRelationNameEnglish('');
+    setRelationBoothNumber('');
+    setRelationGender('');
     setRelationYearOfBirth('');
     setRelationAge('');
     
     setRelationOfRelationName('');
     setRelationOfRelationNameEnglish('');
+    setRelationOfRelationBoothNumber('');
+    setRelationOfRelationGender('');
     setRelationOfRelationYearOfBirth('');
     setRelationOfRelationAge('');
     
@@ -208,16 +226,22 @@ export default function DivisionPage() {
       elector: {
         name: electorName,
         nameEnglish: electorNameEnglish,
+        boothNumber: electorBoothNumber,
+        gender: electorGender,
         age: age,
       },
       relation: {
         name: relationName,
         nameEnglish: relationNameEnglish,
+        boothNumber: relationBoothNumber,
+        gender: relationGender,
         age: relationAge,
       },
       relationOfRelation: {
         name: relationOfRelationName,
         nameEnglish: relationOfRelationNameEnglish,
+        boothNumber: relationOfRelationBoothNumber,
+        gender: relationOfRelationGender,
         age: relationOfRelationAge,
       },
     };
@@ -227,7 +251,7 @@ export default function DivisionPage() {
   };
 
   return (
-    <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
+    <Container maxWidth="md" sx={{ mt: 4, mb: { xs: 12, sm: 4 } }}>
       <Paper elevation={2} sx={{ p: 4 }}>
         <Stack spacing={3}>
           <FormControl fullWidth>
@@ -266,8 +290,11 @@ export default function DivisionPage() {
             Elector Details
           </Typography>
 
-          <Stack direction="row" spacing={2} alignItems="flex-start">
-            <Box sx={{ flex: 1, minHeight: 80 }}>
+          <Stack 
+            direction="column"
+            spacing={2}
+          >
+            <Box sx={{ minHeight: 80 }}>
               <TamilTransliteratorInput
                 label="Name of the Elector"
                 value={electorName}
@@ -278,35 +305,67 @@ export default function DivisionPage() {
               />
             </Box>
             
-            <TextField
-              label="Year of Birth"
-              type="number"
-              value={yearOfBirth}
-              onChange={(e) => handleYearOfBirthChange(e.target.value)}
-              placeholder="YYYY"
-              sx={{ width: 140, alignSelf: 'flex-start' }}
-            />
-            
-            <Typography sx={{ pt: 1, fontWeight: 500, color: 'text.secondary' }}>
-              OR
-            </Typography>
-            
-            <TextField
-              label="Current Age"
-              type="number"
-              value={age}
-              onChange={(e) => setAge(e.target.value)}
-              placeholder="Enter age"
-              sx={{ width: 120, alignSelf: 'flex-start' }}
-            />
+            <Stack direction="row" spacing={1}>
+              <Stack spacing={1} sx={{ flex: { xs: 1, sm: 'none' } }}>
+                <TextField
+                  label="Booth Number"
+                  type="number"
+                  value={electorBoothNumber}
+                  onChange={(e) => setElectorBoothNumber(e.target.value)}
+                  placeholder="Booth"
+                  sx={{ width: { xs: '100%', sm: 120 } }}
+                  size="small"
+                />
+                <Box sx={{ height: '21px' }} />
+                <FormControl sx={{ width: { xs: '100%', sm: 120 } }} size="small">
+                  <InputLabel>Gender</InputLabel>
+                  <Select
+                    value={electorGender}
+                    label="Gender"
+                    onChange={(e) => setElectorGender(e.target.value)}
+                  >
+                    {genders.map((gender) => (
+                      <MenuItem key={gender.id} value={gender.id}>
+                        {gender.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Stack>
+              
+              <Stack spacing={1} sx={{ flex: { xs: 1, sm: 'none' } }}>
+                <TextField
+                  label="Year of Birth"
+                  type="number"
+                  value={yearOfBirth}
+                  onChange={(e) => handleYearOfBirthChange(e.target.value)}
+                  placeholder="YYYY"
+                  sx={{ width: { xs: '100%', sm: 120 } }}
+                  size="small"
+                />
+                <Typography sx={{ textAlign: 'center', fontWeight: 500, color: 'text.secondary', fontSize: '0.875rem' }}>OR</Typography>
+                <TextField
+                  label="Current Age"
+                  type="number"
+                  value={age}
+                  onChange={(e) => setAge(e.target.value)}
+                  placeholder="Age"
+                  sx={{ width: { xs: '100%', sm: 120 } }}
+                  size="small"
+                />
+              </Stack>
+            </Stack>
           </Stack>
 
           <Typography variant="h6" sx={{ mt: 4, mb: 2, fontWeight: 600 }}>
             Relation Details
           </Typography>
 
-          <Stack direction="row" spacing={2} alignItems="flex-start">
-            <Box sx={{ flex: 1, minHeight: 80 }}>
+          <Stack 
+            direction="column"
+            spacing={2}
+          >
+            <Box sx={{ minHeight: 80 }}>
               <TamilTransliteratorInput
                 label="Name of the Relation"
                 value={relationName}
@@ -317,35 +376,67 @@ export default function DivisionPage() {
               />
             </Box>
             
-            <TextField
-              label="Year of Birth"
-              type="number"
-              value={relationYearOfBirth}
-              onChange={(e) => handleRelationYearOfBirthChange(e.target.value)}
-              placeholder="YYYY"
-              sx={{ width: 140, alignSelf: 'flex-start' }}
-            />
-            
-            <Typography sx={{ pt: 1, fontWeight: 500, color: 'text.secondary' }}>
-              OR
-            </Typography>
-            
-            <TextField
-              label="Current Age"
-              type="number"
-              value={relationAge}
-              onChange={(e) => setRelationAge(e.target.value)}
-              placeholder="Enter age"
-              sx={{ width: 120, alignSelf: 'flex-start' }}
-            />
+            <Stack direction="row" spacing={1}>
+              <Stack spacing={1} sx={{ flex: { xs: 1, sm: 'none' } }}>
+                <TextField
+                  label="Booth Number"
+                  type="number"
+                  value={relationBoothNumber}
+                  onChange={(e) => setRelationBoothNumber(e.target.value)}
+                  placeholder="Booth"
+                  sx={{ width: { xs: '100%', sm: 120 } }}
+                  size="small"
+                />
+                <Box sx={{ height: '21px' }} />
+                <FormControl sx={{ width: { xs: '100%', sm: 120 } }} size="small">
+                  <InputLabel>Gender</InputLabel>
+                  <Select
+                    value={relationGender}
+                    label="Gender"
+                    onChange={(e) => setRelationGender(e.target.value)}
+                  >
+                    {genders.map((gender) => (
+                      <MenuItem key={gender.id} value={gender.id}>
+                        {gender.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Stack>
+              
+              <Stack spacing={1} sx={{ flex: { xs: 1, sm: 'none' } }}>
+                <TextField
+                  label="Year of Birth"
+                  type="number"
+                  value={relationYearOfBirth}
+                  onChange={(e) => handleRelationYearOfBirthChange(e.target.value)}
+                  placeholder="YYYY"
+                  sx={{ width: { xs: '100%', sm: 120 } }}
+                  size="small"
+                />
+                <Typography sx={{ textAlign: 'center', fontWeight: 500, color: 'text.secondary', fontSize: '0.875rem' }}>OR</Typography>
+                <TextField
+                  label="Current Age"
+                  type="number"
+                  value={relationAge}
+                  onChange={(e) => setRelationAge(e.target.value)}
+                  placeholder="Age"
+                  sx={{ width: { xs: '100%', sm: 120 } }}
+                  size="small"
+                />
+              </Stack>
+            </Stack>
           </Stack>
 
           <Typography variant="h6" sx={{ mt: 4, mb: 2, fontWeight: 600 }}>
             Relation of Relation Details
           </Typography>
 
-          <Stack direction="row" spacing={2} alignItems="flex-start">
-            <Box sx={{ flex: 1, minHeight: 80 }}>
+          <Stack 
+            direction="column"
+            spacing={2}
+          >
+            <Box sx={{ minHeight: 80 }}>
               <TamilTransliteratorInput
                 label="Name of the Relation of Relation"
                 value={relationOfRelationName}
@@ -356,34 +447,79 @@ export default function DivisionPage() {
               />
             </Box>
             
-            <TextField
-              label="Year of Birth"
-              type="number"
-              value={relationOfRelationYearOfBirth}
-              onChange={(e) => handleRelationOfRelationYearOfBirthChange(e.target.value)}
-              placeholder="YYYY"
-              sx={{ width: 140, alignSelf: 'flex-start' }}
-            />
-            
-            <Typography sx={{ pt: 1, fontWeight: 500, color: 'text.secondary' }}>
-              OR
-            </Typography>
-            
-            <TextField
-              label="Current Age"
-              type="number"
-              value={relationOfRelationAge}
-              onChange={(e) => setRelationOfRelationAge(e.target.value)}
-              placeholder="Enter age"
-              sx={{ width: 120, alignSelf: 'flex-start' }}
-            />
+            <Stack direction="row" spacing={1}>
+              <Stack spacing={1} sx={{ flex: { xs: 1, sm: 'none' } }}>
+                <TextField
+                  label="Booth Number"
+                  type="number"
+                  value={relationOfRelationBoothNumber}
+                  onChange={(e) => setRelationOfRelationBoothNumber(e.target.value)}
+                  placeholder="Booth"
+                  sx={{ width: { xs: '100%', sm: 120 } }}
+                  size="small"
+                />
+                <Box sx={{ height: '21px' }} />
+                <FormControl sx={{ width: { xs: '100%', sm: 120 } }} size="small">
+                  <InputLabel>Gender</InputLabel>
+                  <Select
+                    value={relationOfRelationGender}
+                    label="Gender"
+                    onChange={(e) => setRelationOfRelationGender(e.target.value)}
+                  >
+                    {genders.map((gender) => (
+                      <MenuItem key={gender.id} value={gender.id}>
+                        {gender.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Stack>
+              
+              <Stack spacing={1} sx={{ flex: { xs: 1, sm: 'none' } }}>
+                <TextField
+                  label="Year of Birth"
+                  type="number"
+                  value={relationOfRelationYearOfBirth}
+                  onChange={(e) => handleRelationOfRelationYearOfBirthChange(e.target.value)}
+                  placeholder="YYYY"
+                  sx={{ width: { xs: '100%', sm: 120 } }}
+                  size="small"
+                />
+                <Typography sx={{ textAlign: 'center', fontWeight: 500, color: 'text.secondary', fontSize: '0.875rem' }}>OR</Typography>
+                <TextField
+                  label="Current Age"
+                  type="number"
+                  value={relationOfRelationAge}
+                  onChange={(e) => setRelationOfRelationAge(e.target.value)}
+                  placeholder="Age"
+                  sx={{ width: { xs: '100%', sm: 120 } }}
+                  size="small"
+                />
+              </Stack>
+            </Stack>
           </Stack>
 
-          <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
+          <Stack 
+            direction="row" 
+            spacing={2} 
+            sx={{ 
+              mt: 2,
+              position: { xs: 'fixed', sm: 'relative' },
+              bottom: { xs: 16, sm: 'auto' },
+              left: { xs: 16, sm: 'auto' },
+              right: { xs: 16, sm: 'auto' },
+              zIndex: { xs: 1000, sm: 'auto' },
+              bgcolor: { xs: 'background.paper', sm: 'transparent' },
+              p: { xs: 2, sm: 0 },
+              borderRadius: { xs: 2, sm: 0 },
+              boxShadow: { xs: 3, sm: 0 },
+            }}
+          >
             <Button 
               variant="contained" 
               onClick={handleSubmit}
               disabled={!selectedDistrict || !selectedConstituency}
+              sx={{ flex: 1 }}
             >
               Submit
             </Button>
@@ -394,10 +530,11 @@ export default function DivisionPage() {
               disabled={
                 selectedDistrict === originalDistrict && 
                 selectedConstituency === originalConstituency &&
-                !electorName && !yearOfBirth && !age &&
-                !relationName && !relationYearOfBirth && !relationAge &&
-                !relationOfRelationName && !relationOfRelationYearOfBirth && !relationOfRelationAge
+                !electorName && !electorBoothNumber && !electorGender && !yearOfBirth && !age &&
+                !relationName && !relationBoothNumber && !relationGender && !relationYearOfBirth && !relationAge &&
+                !relationOfRelationName && !relationOfRelationBoothNumber && !relationOfRelationGender && !relationOfRelationYearOfBirth && !relationOfRelationAge
               }
+              sx={{ flex: 1 }}
             >
               Clear Search
             </Button>

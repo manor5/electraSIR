@@ -14,7 +14,9 @@
     "@emotion/styled": "^11.14.1",
     "@mui/material": "^7.3.5",
     "@mui/material-nextjs": "^7.3.5",
+    "@types/pg": "^8.15.6",
     "next": "16.0.3",
+    "pg": "^8.16.3",
     "react": "19.2.0",
     "react-dom": "19.2.0"
   },
@@ -27,6 +29,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.0.3",
     "tailwindcss": "^4",
+    "tsx": "^4.20.6",
     "typescript": "^5"
   }
 }

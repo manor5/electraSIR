@@ -12,10 +12,13 @@ import {
   Stack,
   Button,
   TextField,
+  CircularProgress,
+  Alert,
 } from '@mui/material';
 import { districts, constituencies, genders } from '@/app/utils/preConfiguredData';
 import { useState, useEffect } from 'react';
 import TamilTransliteratorInput from '@/app/components/TamilTransliterator';
+import { searchElectors, SearchResult } from '@/app/actions/searchActions';
 
 type SubmitData = {
   district: {
@@ -58,6 +61,48 @@ export default function DivisionPage() {
   const [selectedDistrict, setSelectedDistrict] = useState('');
   const [selectedConstituency, setSelectedConstituency] = useState('');
   const [filteredConstituencies, setFilteredConstituencies] = useState(constituencies);
+
+  // Helper function to convert relation codes to Tamil text
+  const getRelationText = (relationCode: string): string => {
+    const relationMap: { [key: string]: string } = {
+      'த': 'தந்தை',
+      'தா': 'தந்தை',
+      'tha': 'தந்தை',
+      'க': 'கணவர்',
+      'கா': 'கணவர்',
+      'ka': 'கணவர்',
+      'தய்': 'தாய்',
+      'thay': 'தாய்',
+      'ம': 'மனைவி',
+      'ma': 'மனைவி',
+      'அ': 'அண்ணன்',
+      'an': 'அண்ணன்',
+      'தம்': 'தம்பி',
+      'tham': 'தம்பி',
+      'அக்': 'அக்கா',
+      'akka': 'அக்கா',
+      'தங்': 'தங்கை',
+      'thangai': 'தங்கை',
+    };
+    return relationMap[relationCode.toLowerCase()] || relationCode;
+  };
+
+  // Helper function to convert gender codes to Tamil text
+  const getGenderText = (genderCode: string): string => {
+    const genderMap: { [key: string]: string } = {
+      'ஆ': 'ஆண்',
+      'aa': 'ஆண்',
+      'aan': 'ஆண்',
+      'பெ': 'பெண்',
+      'pe': 'பெண்',
+      'pen': 'பெண்',
+      'm': 'ஆண்',
+      'male': 'ஆண்',
+      'f': 'பெண்',
+      'female': 'பெண்',
+    };
+    return genderMap[genderCode.toLowerCase()] || genderCode;
+  };
   
   // Store original values from URL
   const [originalDistrict, setOriginalDistrict] = useState('');
@@ -86,6 +131,11 @@ export default function DivisionPage() {
   const [relationOfRelationGender, setRelationOfRelationGender] = useState('');
   const [relationOfRelationYearOfBirth, setRelationOfRelationYearOfBirth] = useState('');
   const [relationOfRelationAge, setRelationOfRelationAge] = useState('');
+
+  // Search state
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [searchError, setSearchError] = useState<string>('');
 
   // Calculate age from year of birth
   const calculateAgeFromYear = (year: string) => {
@@ -203,13 +253,41 @@ export default function DivisionPage() {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const districtData = districts.find(d => d.id.toString() === selectedDistrict);
     const constituencyData = constituencies.find(c => c.id.toString() === selectedConstituency);
     
     if (!districtData || !constituencyData) {
       console.error('District or Constituency not found');
       return;
+    }
+
+    // Clear previous results and errors
+    setSearchError('');
+    setSearchResults([]);
+    setIsSearching(true);
+
+    try {
+      // Perform database search
+      const result = await searchElectors({
+        name: electorName || undefined,
+        relativeName: relationName || undefined,
+        boothNumber: electorBoothNumber || undefined,
+        gender: electorGender || undefined,
+        age: age ? parseInt(age) : undefined,
+      });
+
+      if (result.success && result.data) {
+        setSearchResults(result.data);
+        console.log('Search results:', result.data);
+      } else {
+        setSearchError(result.error || 'Search failed');
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+      setSearchError('An error occurred while searching');
+    } finally {
+      setIsSearching(false);
     }
 
     const submitData: SubmitData = {
@@ -247,7 +325,6 @@ export default function DivisionPage() {
     };
 
     console.log('Submitted:', submitData);
-    // Add your submission logic here
   };
 
   return (
@@ -286,14 +363,32 @@ export default function DivisionPage() {
             </Select>
           </FormControl>
 
-          <Typography variant="h6" sx={{ mt: 4, mb: 2, fontWeight: 600 }}>
-            Elector Details
-          </Typography>
+          <Box sx={{ mt: 4, mb: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box sx={{ 
+              width: 40, 
+              height: 40, 
+              borderRadius: '50%', 
+              bgcolor: 'primary.main', 
+              color: 'white',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 'bold',
+              fontSize: '1.2rem'
+            }}>
+              1
+            </Box>
+            <Typography variant="h6" sx={{ fontWeight: 600, flex: 1 }}>
+              Elector Details
+            </Typography>
+            <Box sx={{ flex: 1, height: '2px', bgcolor: 'divider' }} />
+          </Box>
 
-          <Stack 
-            direction="column"
-            spacing={2}
-          >
+          <Box sx={{ p: 3, bgcolor: 'rgba(63, 81, 181, 0.04)', borderRadius: 2 }}>
+            <Stack 
+              direction="column"
+              spacing={2}
+            >
             <Box sx={{ minHeight: 80 }}>
               <TamilTransliteratorInput
                 label="Name of the Elector"
@@ -356,15 +451,34 @@ export default function DivisionPage() {
               </Stack>
             </Stack>
           </Stack>
+          </Box>
 
-          <Typography variant="h6" sx={{ mt: 4, mb: 2, fontWeight: 600 }}>
-            Relation Details
-          </Typography>
+          <Box sx={{ mt: 4, mb: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box sx={{ 
+              width: 40, 
+              height: 40, 
+              borderRadius: '50%', 
+              bgcolor: 'secondary.main', 
+              color: 'white',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 'bold',
+              fontSize: '1.2rem'
+            }}>
+              2
+            </Box>
+            <Typography variant="h6" sx={{ fontWeight: 600, flex: 1 }}>
+              Relation Details
+            </Typography>
+            <Box sx={{ flex: 1, height: '2px', bgcolor: 'divider' }} />
+          </Box>
 
-          <Stack 
-            direction="column"
-            spacing={2}
-          >
+          <Box sx={{ p: 3, bgcolor: 'rgba(233, 30, 99, 0.04)', borderRadius: 2 }}>
+            <Stack 
+              direction="column"
+              spacing={2}
+            >
             <Box sx={{ minHeight: 80 }}>
               <TamilTransliteratorInput
                 label="Name of the Relation"
@@ -427,15 +541,34 @@ export default function DivisionPage() {
               </Stack>
             </Stack>
           </Stack>
+          </Box>
 
-          <Typography variant="h6" sx={{ mt: 4, mb: 2, fontWeight: 600 }}>
-            Relation of Relation Details
-          </Typography>
+          <Box sx={{ mt: 4, mb: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box sx={{ 
+              width: 40, 
+              height: 40, 
+              borderRadius: '50%', 
+              bgcolor: 'success.main', 
+              color: 'white',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 'bold',
+              fontSize: '1.2rem'
+            }}>
+              3
+            </Box>
+            <Typography variant="h6" sx={{ fontWeight: 600, flex: 1 }}>
+              Relation of Relation Details
+            </Typography>
+            <Box sx={{ flex: 1, height: '2px', bgcolor: 'divider' }} />
+          </Box>
 
-          <Stack 
-            direction="column"
-            spacing={2}
-          >
+          <Box sx={{ p: 3, bgcolor: 'rgba(46, 125, 50, 0.04)', borderRadius: 2 }}>
+            <Stack 
+              direction="column"
+              spacing={2}
+            >
             <Box sx={{ minHeight: 80 }}>
               <TamilTransliteratorInput
                 label="Name of the Relation of Relation"
@@ -498,6 +631,76 @@ export default function DivisionPage() {
               </Stack>
             </Stack>
           </Stack>
+          </Box>
+
+          {/* Search Results Section */}
+          {isSearching && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+              <CircularProgress />
+            </Box>
+          )}
+
+          {searchError && (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              {searchError}
+            </Alert>
+          )}
+
+          {searchResults.length > 0 && (
+            <Box sx={{ mt: 4 }}>
+              <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                Search Results ({searchResults.length})
+              </Typography>
+              <Stack spacing={2}>
+                {searchResults.map((result) => (
+                  <Paper key={result.id} elevation={1} sx={{ p: 2 }}>
+                    <Stack spacing={1}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                        {result.name}
+                      </Typography>
+                      <Stack direction="row" spacing={2} flexWrap="wrap">
+                        {result.serial_no && (
+                          <Typography variant="body2" color="text.secondary">
+                            Serial No: {result.serial_no}
+                          </Typography>
+                        )}
+                        {result.booth_no && (
+                          <Typography variant="body2" color="text.secondary">
+                            Booth: {result.booth_no}
+                          </Typography>
+                        )}
+                        {result.gender && (
+                          <Typography variant="body2" color="text.secondary">
+                            Gender: {getGenderText(result.gender)}
+                          </Typography>
+                        )}
+                        {result.age && (
+                          <Typography variant="body2" color="text.secondary">
+                            Age: {result.age}
+                          </Typography>
+                        )}
+                        {result.relation && (
+                          <Typography variant="body2" color="text.secondary">
+                            Relation: {getRelationText(result.relation)}
+                          </Typography>
+                        )}
+                        {result.relative_name && (
+                          <Typography variant="body2" color="text.secondary">
+                            Relative: {result.relative_name}
+                          </Typography>
+                        )}
+                        {result.epic && (
+                          <Typography variant="body2" color="text.secondary">
+                            EPIC: {result.epic}
+                          </Typography>
+                        )}
+                      </Stack>
+                    </Stack>
+                  </Paper>
+                ))}
+              </Stack>
+            </Box>
+          )}
 
           <Stack 
             direction="row" 
@@ -518,10 +721,10 @@ export default function DivisionPage() {
             <Button 
               variant="contained" 
               onClick={handleSubmit}
-              disabled={!selectedDistrict || !selectedConstituency}
+              disabled={!selectedDistrict || !selectedConstituency || isSearching}
               sx={{ flex: 1 }}
             >
-              Submit
+              {isSearching ? 'Searching...' : 'Submit'}
             </Button>
             
             <Button 

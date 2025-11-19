@@ -103,7 +103,7 @@ export async function searchElectors(params: SearchParams): Promise<{
     }
 
     // Add ORDER BY and LIMIT
-    query += ' ORDER BY sequence LIMIT 100';
+    query += ' ORDER BY sequence LIMIT 1200';
 
     console.log('Executing query:', query);
     console.log('With values:', values);

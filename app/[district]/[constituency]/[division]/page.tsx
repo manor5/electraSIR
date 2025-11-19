@@ -474,7 +474,7 @@ export default function DivisionPage() {
             <Box sx={{ flex: 1, height: '2px', bgcolor: 'divider' }} />
           </Box>
 
-          <Box sx={{ p: 3, bgcolor: 'rgba(233, 30, 99, 0.04)', borderRadius: 2 }}>
+          <Box sx={{ p: 3, bgcolor: 'rgba(63, 81, 181, 0.04)', borderRadius: 2 }}>
             <Stack 
               direction="column"
               spacing={2}
@@ -564,7 +564,7 @@ export default function DivisionPage() {
             <Box sx={{ flex: 1, height: '2px', bgcolor: 'divider' }} />
           </Box>
 
-          <Box sx={{ p: 3, bgcolor: 'rgba(46, 125, 50, 0.04)', borderRadius: 2 }}>
+          <Box sx={{ p: 3, bgcolor: 'rgba(63, 81, 181, 0.04)', borderRadius: 2 }}>
             <Stack 
               direction="column"
               spacing={2}
@@ -633,75 +633,6 @@ export default function DivisionPage() {
           </Stack>
           </Box>
 
-          {/* Search Results Section */}
-          {isSearching && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-              <CircularProgress />
-            </Box>
-          )}
-
-          {searchError && (
-            <Alert severity="error" sx={{ mt: 2 }}>
-              {searchError}
-            </Alert>
-          )}
-
-          {searchResults.length > 0 && (
-            <Box sx={{ mt: 4 }}>
-              <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                Search Results ({searchResults.length})
-              </Typography>
-              <Stack spacing={2}>
-                {searchResults.map((result) => (
-                  <Paper key={result.id} elevation={1} sx={{ p: 2 }}>
-                    <Stack spacing={1}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                        {result.name}
-                      </Typography>
-                      <Stack direction="row" spacing={2} flexWrap="wrap">
-                        {result.serial_no && (
-                          <Typography variant="body2" color="text.secondary">
-                            Serial No: {result.serial_no}
-                          </Typography>
-                        )}
-                        {result.booth_no && (
-                          <Typography variant="body2" color="text.secondary">
-                            Booth: {result.booth_no}
-                          </Typography>
-                        )}
-                        {result.gender && (
-                          <Typography variant="body2" color="text.secondary">
-                            Gender: {getGenderText(result.gender)}
-                          </Typography>
-                        )}
-                        {result.age && (
-                          <Typography variant="body2" color="text.secondary">
-                            Age: {result.age}
-                          </Typography>
-                        )}
-                        {result.relation && (
-                          <Typography variant="body2" color="text.secondary">
-                            Relation: {getRelationText(result.relation)}
-                          </Typography>
-                        )}
-                        {result.relative_name && (
-                          <Typography variant="body2" color="text.secondary">
-                            Relative: {result.relative_name}
-                          </Typography>
-                        )}
-                        {result.epic && (
-                          <Typography variant="body2" color="text.secondary">
-                            EPIC: {result.epic}
-                          </Typography>
-                        )}
-                      </Stack>
-                    </Stack>
-                  </Paper>
-                ))}
-              </Stack>
-            </Box>
-          )}
-
           <Stack 
             direction="row" 
             spacing={2} 
@@ -742,6 +673,88 @@ export default function DivisionPage() {
               Clear Search
             </Button>
           </Stack>
+
+          {/* Search Results Section */}
+          {isSearching && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+              <CircularProgress />
+            </Box>
+          )}
+
+          {searchError && (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              {searchError}
+            </Alert>
+          )}
+
+          {searchResults.length > 0 && (
+            <Box sx={{ mt: 4 }}>
+              <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                Search Results ({searchResults.length})
+              </Typography>
+              <Stack spacing={2}>
+                {searchResults.map((result) => (
+                  <Paper key={result.id} elevation={1} sx={{ p: 2 }}>
+                    <Stack spacing={0}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 0.25 }}>
+                        {result.name}
+                      </Typography>
+                      
+                      <Stack direction="row" spacing={2}>
+                        {result.relative_name && (
+                          <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                            {result.relative_name}
+                          </Typography>
+                        )}
+                        {result.relative_name && result.relation && (
+                          <Typography variant="body2" color="text.secondary">
+                            -
+                          </Typography>
+                        )}
+                        {result.relation && (
+                          <Typography variant="body2" color="text.secondary">
+                            {getRelationText(result.relation)}
+                          </Typography>
+                        )}
+                      </Stack>
+                      
+                      <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
+                        {result.gender && (
+                          <Typography variant="body2" color="text.secondary">
+                            Gender: {getGenderText(result.gender)}
+                          </Typography>
+                        )}
+                        {result.age && (
+                          <Typography variant="body2" color="text.secondary">
+                            Age: {result.age}
+                          </Typography>
+                        )}
+                      </Stack>
+                      
+                      <Stack direction="row" spacing={2} sx={{ mt: 0.5 }}>
+                        {result.sequence && (
+                          <Typography variant="body2" color="text.secondary">
+                            Sequence: {result.sequence}
+                          </Typography>
+                        )}
+                        {result.booth_no && (
+                          <Typography variant="body2" color="text.secondary">
+                            Booth: {result.booth_no}
+                          </Typography>
+                        )}
+                      </Stack>
+                      
+                      {result.epic && (
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                          EPIC: {result.epic}
+                        </Typography>
+                      )}
+                    </Stack>
+                  </Paper>
+                ))}
+              </Stack>
+            </Box>
+          )}
 
           {params.division && (
             <Box sx={{ mt: 2, p: 2, bgcolor: 'primary.50', borderRadius: 1 }}>

@@ -23,6 +23,8 @@ export type SearchParams = {
   gender?: string;
   age?: number;
   epic?: string;
+  constituencyId?: string;
+  birthYear?: string;
 };
 
 /**
@@ -37,7 +39,7 @@ export async function searchElectors(params: SearchParams): Promise<{
     const conditions: string[] = [];
     const values: any[] = [];
     let paramIndex = 1;
-
+    console.log('Search parameters:', params);
     // Build dynamic WHERE clause based on provided parameters
     if (params.name) {
       conditions.push(`name ILIKE $${paramIndex}`);
@@ -58,21 +60,45 @@ export async function searchElectors(params: SearchParams): Promise<{
     }
 
     if (params.boothNumber) {
-      conditions.push(`booth_no = $${paramIndex}`);
-      values.push(parseInt(params.boothNumber));
-      paramIndex++;
+      // Split by comma and parse each booth number
+      const boothNumbers = params.boothNumber.split(',').map(b => parseInt(b.trim())).filter(b => !isNaN(b));
+      
+      if (boothNumbers.length === 1) {
+        conditions.push(`booth_no = $${paramIndex}`);
+        values.push(boothNumbers[0]);
+        paramIndex++;
+      } else if (boothNumbers.length > 1) {
+        const placeholders = boothNumbers.map((_, index) => `$${paramIndex + index}`).join(', ');
+        conditions.push(`booth_no IN (${placeholders})`);
+        values.push(...boothNumbers);
+        paramIndex += boothNumbers.length;
+      }
     }
 
     if (params.gender) {
       conditions.push(`gender ILIKE $${paramIndex}`);
-      values.push(`%${params.gender}%`);
+      //`(gender = 'M' AND $${paramIndex} = 'ஆ') OR (gender = 'F' AND $${paramIndex} = 'பெ'
+      values.push(`%${params.gender=='M'?'ஆ':'பெ'}%`);
       paramIndex++;
     }
 
-    if (params.age) {
-      conditions.push(`age = $${paramIndex}`);
-      values.push(params.age);
-      paramIndex++;
+    // if (params.age) {
+    //   // Search for age range: age-1, age, age+1
+    //   const ageValue = params.age;
+    //   conditions.push(`age IN ($${paramIndex}, $${paramIndex + 1}, $${paramIndex + 2})`);
+    //   values.push(ageValue - 1, ageValue, ageValue + 1);
+    //   paramIndex += 3;
+    // } else 
+        if (params.birthYear && params.constituencyId) {
+      // Compute age based on birth year and constituency
+      const birthYear = parseInt(params.birthYear);
+      const referenceYear = params.constituencyId === '167' ? 2005 : 2002;
+      const computedAge = referenceYear - birthYear;
+      
+      // Search for age range: computedAge-1, computedAge, computedAge+1
+      conditions.push(`age IN ($${paramIndex}, $${paramIndex + 1}, $${paramIndex + 2})`);
+      values.push(computedAge - 1, computedAge, computedAge + 1);
+      paramIndex += 3;
     }
 
     if (params.epic) {

@@ -30,7 +30,6 @@ type SubmitData = {
     name: string;
     districtId: number;
   };
-  division: string;
   elector: {
     name: string;
     nameEnglish: string;
@@ -40,18 +39,9 @@ type SubmitData = {
   };
   relation: {
     name: string;
-    nameEnglish: string;
-    boothNumber: string;
-    gender: string;
-    age: string;
+    
   };
-  relationOfRelation: {
-    name: string;
-    nameEnglish: string;
-    boothNumber: string;
-    gender: string;
-    age: string;
-  };
+  
 };
 
 export default function DivisionPage() {
@@ -136,6 +126,13 @@ export default function DivisionPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [searchError, setSearchError] = useState<string>('');
+  const [isMultiColumnView, setIsMultiColumnView] = useState(false);
+  const [boothNumberError, setBoothNumberError] = useState<string>('');
+
+  // Dynamic age label based on constituency
+  const getAgeLabel = () => {
+    return selectedConstituency === '167' ? 'Age at 2005' : 'Age at 2002';
+  };
 
   // Calculate age from year of birth
   const calculateAgeFromYear = (year: string) => {
@@ -253,6 +250,11 @@ export default function DivisionPage() {
     }
   };
 
+  const handleBoothNumberChange = (value: string) => {
+    setElectorBoothNumber(value);
+    setBoothNumberError('');
+  };
+
   const handleSubmit = async () => {
     const districtData = districts.find(d => d.id.toString() === selectedDistrict);
     const constituencyData = constituencies.find(c => c.id.toString() === selectedConstituency);
@@ -261,6 +263,30 @@ export default function DivisionPage() {
       console.error('District or Constituency not found');
       return;
     }
+
+    // Validate and clean booth number
+    let cleanedBoothNumber = electorBoothNumber;
+    if (electorBoothNumber) {
+      const boothNumbers = electorBoothNumber.split(',').map(b => b.trim());
+      // Filter for non-empty values that are not valid numbers
+      const invalidBooths = boothNumbers.filter(b => {
+        if (b === '') return false; // Skip empty strings
+        const num = parseInt(b);
+        return isNaN(num) || num.toString() !== b; // Check if it's not a valid integer
+      });
+      
+      if (invalidBooths.length > 0) {
+        // Show error if there are any invalid values
+        setBoothNumberError('Invalid format. Use numbers separated by commas (e.g., 1, 2, 3)');
+        return;
+      }
+      
+      // Clean the booth numbers - remove empty values
+      const validBooths = boothNumbers.filter(b => b !== '' && !isNaN(parseInt(b)));
+      cleanedBoothNumber = validBooths.join(', ');
+    }
+    
+    setBoothNumberError('');
 
     // Clear previous results and errors
     setSearchError('');
@@ -272,9 +298,11 @@ export default function DivisionPage() {
       const result = await searchElectors({
         name: electorName || undefined,
         relativeName: relationName || undefined,
-        boothNumber: electorBoothNumber || undefined,
+        boothNumber: cleanedBoothNumber || undefined,
         gender: electorGender || undefined,
         age: age ? parseInt(age) : undefined,
+        constituencyId: selectedConstituency || undefined,
+        birthYear: yearOfBirth || undefined,
       });
 
       if (result.success && result.data) {
@@ -300,7 +328,6 @@ export default function DivisionPage() {
         name: constituencyData.name,
         districtId: constituencyData.districtId,
       },
-      division: params.division ? decodeURIComponent(params.division as string) : '',
       elector: {
         name: electorName,
         nameEnglish: electorNameEnglish,
@@ -309,19 +336,10 @@ export default function DivisionPage() {
         age: age,
       },
       relation: {
-        name: relationName,
-        nameEnglish: relationNameEnglish,
-        boothNumber: relationBoothNumber,
-        gender: relationGender,
-        age: relationAge,
+        name: relationName
+        
       },
-      relationOfRelation: {
-        name: relationOfRelationName,
-        nameEnglish: relationOfRelationNameEnglish,
-        boothNumber: relationOfRelationBoothNumber,
-        gender: relationOfRelationGender,
-        age: relationOfRelationAge,
-      },
+     
     };
 
     console.log('Submitted:', submitData);
@@ -330,8 +348,8 @@ export default function DivisionPage() {
   return (
     <Container maxWidth="md" sx={{ mt: 4, mb: { xs: 12, sm: 4 } }}>
       <Paper elevation={2} sx={{ p: 4 }}>
-        <Stack spacing={3}>
-          <FormControl fullWidth>
+        <Stack spacing={3} sx={{ display: { xs: 'flex', sm: 'block' }, flexDirection: { xs: 'column', sm: 'column' } }}>
+          {/* <FormControl fullWidth disabled>
             <InputLabel id="district-label">மாவட்டம் / District</InputLabel>
             <Select
               labelId="district-label"
@@ -345,9 +363,9 @@ export default function DivisionPage() {
                 </MenuItem>
               ))}
             </Select>
-          </FormControl>
+          </FormControl> */}
 
-          <FormControl fullWidth disabled={!selectedDistrict}>
+          <FormControl fullWidth>
             <InputLabel id="constituency-label">தொகுதி / Constituency</InputLabel>
             <Select
               labelId="constituency-label"
@@ -364,55 +382,71 @@ export default function DivisionPage() {
           </FormControl>
 
           <Box sx={{ mt: 4, mb: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Box sx={{ 
-              width: 40, 
-              height: 40, 
-              borderRadius: '50%', 
-              bgcolor: 'primary.main', 
-              color: 'white',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 'bold',
-              fontSize: '1.2rem'
-            }}>
-              1
-            </Box>
             <Typography variant="h6" sx={{ fontWeight: 600, flex: 1 }}>
               Elector Details
             </Typography>
-            <Box sx={{ flex: 1, height: '2px', bgcolor: 'divider' }} />
           </Box>
 
           <Box sx={{ p: 3, bgcolor: 'rgba(63, 81, 181, 0.04)', borderRadius: 2 }}>
             <Stack 
               direction="column"
-              spacing={2}
+              spacing={{ xs: 2, sm: 1.5 }}
             >
-            <Box sx={{ minHeight: 80 }}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={{ xs: 0, sm: 2 }}>
+              <Box sx={{ minHeight: { xs: 'auto', sm: 80 }, flex: 1 }}>
+                <TamilTransliteratorInput
+                  label="Name of the Elector"
+                  value={electorName}
+                  onChange={setElectorName}
+                  englishValue={electorNameEnglish}
+                  onEnglishChange={setElectorNameEnglish}
+                  fullWidth
+                />
+              </Box>
+              
+              <Box sx={{ minHeight: 80, flex: 1, display: { xs: 'none', sm: 'block' } }}>
+                <TamilTransliteratorInput
+                  label="Name of the Relation"
+                  value={relationName}
+                  onChange={setRelationName}
+                  englishValue={relationNameEnglish}
+                  onEnglishChange={setRelationNameEnglish}
+                  fullWidth
+                />
+              </Box>
+            </Stack>
+            
+            <Box sx={{ display: { xs: 'block', sm: 'none' }, mt: { xs: -1, sm: 0 } }}>
               <TamilTransliteratorInput
-                label="Name of the Elector"
-                value={electorName}
-                onChange={setElectorName}
-                englishValue={electorNameEnglish}
-                onEnglishChange={setElectorNameEnglish}
+                label="Name of the Relation"
+                value={relationName}
+                onChange={setRelationName}
+                englishValue={relationNameEnglish}
+                onEnglishChange={setRelationNameEnglish}
                 fullWidth
               />
             </Box>
             
-            <Stack direction="row" spacing={1}>
-              <Stack spacing={1} sx={{ flex: { xs: 1, sm: 'none' } }}>
-                <TextField
-                  label="Booth Number"
-                  type="number"
-                  value={electorBoothNumber}
-                  onChange={(e) => setElectorBoothNumber(e.target.value)}
-                  placeholder="Booth"
-                  sx={{ width: { xs: '100%', sm: 120 } }}
-                  size="small"
-                />
-                <Box sx={{ height: '21px' }} />
-                <FormControl sx={{ width: { xs: '100%', sm: 120 } }} size="small">
+            <Box sx={{ display: { xs: 'flex', sm: 'none' }, flexDirection: 'column', gap: 1 }}>
+              <Stack direction="row" spacing={1}>
+                <Box sx={{ width: '50%' }}>
+                  <TextField
+                    label="Booth Number"
+                    type="text"
+                    value={electorBoothNumber}
+                    onChange={(e) => handleBoothNumberChange(e.target.value)}
+                    placeholder="1, 2, 3"
+                    sx={{ width: '100%' }}
+                    size="small"
+                    error={!!boothNumberError}
+                  />
+                  {boothNumberError && (
+                    <Typography variant="caption" color="error" sx={{ mt: 0.5, display: 'block' }}>
+                      {boothNumberError}
+                    </Typography>
+                  )}
+                </Box>
+                <FormControl sx={{ width: '50%' }} size="small">
                   <InputLabel>Gender</InputLabel>
                   <Select
                     value={electorGender}
@@ -428,207 +462,58 @@ export default function DivisionPage() {
                 </FormControl>
               </Stack>
               
-              <Stack spacing={1} sx={{ flex: { xs: 1, sm: 'none' } }}>
+              <TextField
+                label="Birth Year"
+                type="number"
+                value={yearOfBirth}
+                onChange={(e) => handleYearOfBirthChange(e.target.value)}
+                placeholder="YYYY"
+                sx={{ width: '100%' }}
+                size="small"
+              />
+            </Box>
+            
+            <Stack direction="row" spacing={2} sx={{ width: '100%', display: { xs: 'none', sm: 'flex' } }}>
+                <Box sx={{ width: '200px', flex: 1 }}>
+                  <TextField
+                    label="Booth Number"
+                    type="text"
+                    value={electorBoothNumber}
+                    onChange={(e) => handleBoothNumberChange(e.target.value)}
+                    placeholder="1, 2, 3"
+                    sx={{ width: '100%' }}
+                    size="small"
+                    error={!!boothNumberError}
+                  />
+                  {boothNumberError && (
+                    <Typography variant="caption" color="error" sx={{ mt: 0.5, display: 'block' }}>
+                      {boothNumberError}
+                    </Typography>
+                  )}
+                </Box>
+                <FormControl sx={{ width: '200px', flex: 1 }} size="small">
+                  <InputLabel>Gender</InputLabel>
+                  <Select
+                    value={electorGender}
+                    label="Gender"
+                    onChange={(e) => setElectorGender(e.target.value)}
+                  >
+                    {genders.map((gender) => (
+                      <MenuItem key={gender.id} value={gender.id}>
+                        {gender.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
                 <TextField
-                  label="Year of Birth"
+                  label="Birth Year"
                   type="number"
                   value={yearOfBirth}
                   onChange={(e) => handleYearOfBirthChange(e.target.value)}
                   placeholder="YYYY"
-                  sx={{ width: { xs: '100%', sm: 120 } }}
+                  sx={{ width: '200px', flex: 1 }}
                   size="small"
                 />
-                <Typography sx={{ textAlign: 'center', fontWeight: 500, color: 'text.secondary', fontSize: '0.875rem' }}>OR</Typography>
-                <TextField
-                  label="Current Age"
-                  type="number"
-                  value={age}
-                  onChange={(e) => setAge(e.target.value)}
-                  placeholder="Age"
-                  sx={{ width: { xs: '100%', sm: 120 } }}
-                  size="small"
-                />
-              </Stack>
-            </Stack>
-          </Stack>
-          </Box>
-
-          <Box sx={{ mt: 4, mb: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Box sx={{ 
-              width: 40, 
-              height: 40, 
-              borderRadius: '50%', 
-              bgcolor: 'secondary.main', 
-              color: 'white',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 'bold',
-              fontSize: '1.2rem'
-            }}>
-              2
-            </Box>
-            <Typography variant="h6" sx={{ fontWeight: 600, flex: 1 }}>
-              Relation Details
-            </Typography>
-            <Box sx={{ flex: 1, height: '2px', bgcolor: 'divider' }} />
-          </Box>
-
-          <Box sx={{ p: 3, bgcolor: 'rgba(63, 81, 181, 0.04)', borderRadius: 2 }}>
-            <Stack 
-              direction="column"
-              spacing={2}
-            >
-            <Box sx={{ minHeight: 80 }}>
-              <TamilTransliteratorInput
-                label="Name of the Relation"
-                value={relationName}
-                onChange={setRelationName}
-                englishValue={relationNameEnglish}
-                onEnglishChange={setRelationNameEnglish}
-                fullWidth
-              />
-            </Box>
-            
-            <Stack direction="row" spacing={1}>
-              <Stack spacing={1} sx={{ flex: { xs: 1, sm: 'none' } }}>
-                <TextField
-                  label="Booth Number"
-                  type="number"
-                  value={relationBoothNumber}
-                  onChange={(e) => setRelationBoothNumber(e.target.value)}
-                  placeholder="Booth"
-                  sx={{ width: { xs: '100%', sm: 120 } }}
-                  size="small"
-                />
-                <Box sx={{ height: '21px' }} />
-                <FormControl sx={{ width: { xs: '100%', sm: 120 } }} size="small">
-                  <InputLabel>Gender</InputLabel>
-                  <Select
-                    value={relationGender}
-                    label="Gender"
-                    onChange={(e) => setRelationGender(e.target.value)}
-                  >
-                    {genders.map((gender) => (
-                      <MenuItem key={gender.id} value={gender.id}>
-                        {gender.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Stack>
-              
-              <Stack spacing={1} sx={{ flex: { xs: 1, sm: 'none' } }}>
-                <TextField
-                  label="Year of Birth"
-                  type="number"
-                  value={relationYearOfBirth}
-                  onChange={(e) => handleRelationYearOfBirthChange(e.target.value)}
-                  placeholder="YYYY"
-                  sx={{ width: { xs: '100%', sm: 120 } }}
-                  size="small"
-                />
-                <Typography sx={{ textAlign: 'center', fontWeight: 500, color: 'text.secondary', fontSize: '0.875rem' }}>OR</Typography>
-                <TextField
-                  label="Current Age"
-                  type="number"
-                  value={relationAge}
-                  onChange={(e) => setRelationAge(e.target.value)}
-                  placeholder="Age"
-                  sx={{ width: { xs: '100%', sm: 120 } }}
-                  size="small"
-                />
-              </Stack>
-            </Stack>
-          </Stack>
-          </Box>
-
-          <Box sx={{ mt: 4, mb: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Box sx={{ 
-              width: 40, 
-              height: 40, 
-              borderRadius: '50%', 
-              bgcolor: 'success.main', 
-              color: 'white',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 'bold',
-              fontSize: '1.2rem'
-            }}>
-              3
-            </Box>
-            <Typography variant="h6" sx={{ fontWeight: 600, flex: 1 }}>
-              Relation of Relation Details
-            </Typography>
-            <Box sx={{ flex: 1, height: '2px', bgcolor: 'divider' }} />
-          </Box>
-
-          <Box sx={{ p: 3, bgcolor: 'rgba(63, 81, 181, 0.04)', borderRadius: 2 }}>
-            <Stack 
-              direction="column"
-              spacing={2}
-            >
-            <Box sx={{ minHeight: 80 }}>
-              <TamilTransliteratorInput
-                label="Name of the Relation of Relation"
-                value={relationOfRelationName}
-                onChange={setRelationOfRelationName}
-                englishValue={relationOfRelationNameEnglish}
-                onEnglishChange={setRelationOfRelationNameEnglish}
-                fullWidth
-              />
-            </Box>
-            
-            <Stack direction="row" spacing={1}>
-              <Stack spacing={1} sx={{ flex: { xs: 1, sm: 'none' } }}>
-                <TextField
-                  label="Booth Number"
-                  type="number"
-                  value={relationOfRelationBoothNumber}
-                  onChange={(e) => setRelationOfRelationBoothNumber(e.target.value)}
-                  placeholder="Booth"
-                  sx={{ width: { xs: '100%', sm: 120 } }}
-                  size="small"
-                />
-                <Box sx={{ height: '21px' }} />
-                <FormControl sx={{ width: { xs: '100%', sm: 120 } }} size="small">
-                  <InputLabel>Gender</InputLabel>
-                  <Select
-                    value={relationOfRelationGender}
-                    label="Gender"
-                    onChange={(e) => setRelationOfRelationGender(e.target.value)}
-                  >
-                    {genders.map((gender) => (
-                      <MenuItem key={gender.id} value={gender.id}>
-                        {gender.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Stack>
-              
-              <Stack spacing={1} sx={{ flex: { xs: 1, sm: 'none' } }}>
-                <TextField
-                  label="Year of Birth"
-                  type="number"
-                  value={relationOfRelationYearOfBirth}
-                  onChange={(e) => handleRelationOfRelationYearOfBirthChange(e.target.value)}
-                  placeholder="YYYY"
-                  sx={{ width: { xs: '100%', sm: 120 } }}
-                  size="small"
-                />
-                <Typography sx={{ textAlign: 'center', fontWeight: 500, color: 'text.secondary', fontSize: '0.875rem' }}>OR</Typography>
-                <TextField
-                  label="Current Age"
-                  type="number"
-                  value={relationOfRelationAge}
-                  onChange={(e) => setRelationOfRelationAge(e.target.value)}
-                  placeholder="Age"
-                  sx={{ width: { xs: '100%', sm: 120 } }}
-                  size="small"
-                />
-              </Stack>
             </Stack>
           </Stack>
           </Box>
@@ -638,15 +523,7 @@ export default function DivisionPage() {
             spacing={2} 
             sx={{ 
               mt: 2,
-              position: { xs: 'fixed', sm: 'relative' },
-              bottom: { xs: 16, sm: 'auto' },
-              left: { xs: 16, sm: 'auto' },
-              right: { xs: 16, sm: 'auto' },
-              zIndex: { xs: 1000, sm: 'auto' },
-              bgcolor: { xs: 'background.paper', sm: 'transparent' },
-              p: { xs: 2, sm: 0 },
-              borderRadius: { xs: 2, sm: 0 },
-              boxShadow: { xs: 3, sm: 0 },
+              order: { xs: 1, sm: 0 },
             }}
           >
             <Button 
@@ -675,6 +552,7 @@ export default function DivisionPage() {
           </Stack>
 
           {/* Search Results Section */}
+          <Box sx={{ order: { xs: 2, sm: 0 } }}>
           {isSearching && (
             <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
               <CircularProgress />
@@ -689,10 +567,24 @@ export default function DivisionPage() {
 
           {searchResults.length > 0 && (
             <Box sx={{ mt: 4 }}>
-              <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                Search Results ({searchResults.length})
-              </Typography>
-              <Stack spacing={2}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  Search Results ({searchResults.length})
+                </Typography>
+                <Button 
+                  variant="outlined" 
+                  size="small"
+                  onClick={() => setIsMultiColumnView(!isMultiColumnView)}
+                  sx={{ display: { xs: 'none', sm: 'block' } }}
+                >
+                  {isMultiColumnView ? 'Single Column' : 'Multi Column'}
+                </Button>
+              </Box>
+              <Box sx={{ 
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', sm: isMultiColumnView ? 'repeat(2, 1fr)' : '1fr' },
+                gap: 2
+              }}>
                 {searchResults.map((result) => (
                   <Paper key={result.id} elevation={1} sx={{ p: 2 }}>
                     <Stack spacing={0}>
@@ -752,17 +644,12 @@ export default function DivisionPage() {
                     </Stack>
                   </Paper>
                 ))}
-              </Stack>
+              </Box>
             </Box>
           )}
+          </Box>
 
-          {params.division && (
-            <Box sx={{ mt: 2, p: 2, bgcolor: 'primary.50', borderRadius: 1 }}>
-              <Typography variant="body2" color="text.secondary">
-                Division: {decodeURIComponent(params.division as string)}
-              </Typography>
-            </Box>
-          )}
+          
         </Stack>
       </Paper>
     </Container>

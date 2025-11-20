@@ -10,15 +10,20 @@ export const districts = [
 ];
 
 export const constituencies = [
-  { id: 154, name: "Marungapuri", districtId: 19 },
-  { id: 156, name: "Thottiam", districtId: 19 },
-  { id: 157, name: "Uppiliapuram(ST)", districtId: 19 },
-  { id: 158, name: "Musiri", districtId: 19 },
-  { id: 159, name: "Lalgudi", districtId: 19 },
+
   { id: 165, name: "Srirangam", districtId: 19 },
-  { id: 166, name: "Tiruchirapalli I", districtId: 19 },
   { id: 167, name: "Tiruchirapalli II", districtId: 19 },
-  { id: 168, name: "Thiruverambur", districtId: 19 }
 ];
+// export const constituencies = [
+//   { id: 154, name: "Marungapuri", districtId: 19 },
+//   { id: 156, name: "Thottiam", districtId: 19 },
+//   { id: 157, name: "Uppiliapuram(ST)", districtId: 19 },
+//   { id: 158, name: "Musiri", districtId: 19 },
+//   { id: 159, name: "Lalgudi", districtId: 19 },
+//   { id: 165, name: "Srirangam", districtId: 19 },
+//   { id: 166, name: "Tiruchirapalli I", districtId: 19 },
+//   { id: 167, name: "Tiruchirapalli II", districtId: 19 },
+//   { id: 168, name: "Thiruverambur", districtId: 19 }
+// ];
 
 export const genders = [{ id: 'M', label: 'Male' }, { id: 'F', label: 'Female' }];

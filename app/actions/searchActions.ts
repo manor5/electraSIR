@@ -120,7 +120,7 @@ export async function searchElectors(params: SearchParams): Promise<{
         age,
         epic,
         booth_no
-      FROM prev_voters
+      FROM trichy2_import
     `;
 
     // Add WHERE clause if there are conditions

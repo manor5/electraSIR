@@ -476,7 +476,7 @@ export default function DivisionPage() {
             <Stack direction="row" spacing={2} sx={{ width: '100%', display: { xs: 'none', sm: 'flex' } }}>
                 <Box sx={{ width: '200px', flex: 1 }}>
                   <TextField
-                    label="Booth Number"
+                    label="Booth Numbers"
                     type="text"
                     value={electorBoothNumber}
                     onChange={(e) => handleBoothNumberChange(e.target.value)}

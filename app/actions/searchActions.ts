@@ -13,6 +13,7 @@ export type SearchResult = {
   age?: number;
   epic?: string;
   booth_no?: number;
+  door_no?: string;
 };
 
 export type SearchParams = {
@@ -119,7 +120,8 @@ export async function searchElectors(params: SearchParams): Promise<{
         gender,
         age,
         epic,
-        booth_no
+        booth_no,
+        door_no
       FROM trichy2_import
     `;
 
@@ -145,6 +147,141 @@ export async function searchElectors(params: SearchParams): Promise<{
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred'
+    };
+  }
+}
+
+/**
+ * Search for family members based on door number and relative name
+ */
+export async function searchFamilyMembers(params: {
+  doorNo?: string;
+  relativeName?: string;
+  memberName?: string;
+  constituencyId?: string;
+}): Promise<{ 
+  success: boolean; 
+  data?: SearchResult[]; 
+  error?: string 
+}> {
+  try {
+    const conditions: string[] = [];
+    const values: any[] = [];
+    let paramIndex = 1;
+
+    // Family members are identified by:
+    // 1. Same door_no AND relative_name matches (exact)
+    // 2. Same door_no AND relative_name matches with member's name (exact)
+    if (params.doorNo && (params.relativeName || params.memberName)) {
+      conditions.push(`door_no = $${paramIndex}`);
+      values.push(params.doorNo);
+      paramIndex++;
+
+      if (params.relativeName && params.memberName) {
+        conditions.push(`(relative_name = $${paramIndex} OR relative_name = $${paramIndex + 1})`);
+        values.push(params.relativeName);
+        values.push(params.memberName);
+        paramIndex += 2;
+      } else if (params.relativeName) {
+        conditions.push(`relative_name = $${paramIndex}`);
+        values.push(params.relativeName);
+        paramIndex++;
+      }
+    }
+
+    if (conditions.length === 0) {
+      return {
+        success: true,
+        data: []
+      };
+    }
+
+    let query = `
+      SELECT 
+        id,
+        sequence,
+        serial_no,
+        name,
+        relation,
+        relative_name,
+        gender,
+        age,
+        epic,
+        booth_no,
+        door_no
+      FROM trichy2_import
+      WHERE ${conditions.join(' AND ')}
+      ORDER BY sequence
+      LIMIT 50
+    `;
+
+    console.log('Executing family search query:', query);
+    console.log('With values:', values);
+
+    const result = await pool.query(query, values);
+
+    return {
+      success: true,
+      data: result.rows
+    };
+  } catch (error) {
+    console.error('Family search error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error occurred'
+    };
+  }
+}
+
+/**
+ * Increment operation counter
+ */
+export async function incrementOperationCounter(): Promise<{ 
+  success: boolean; 
+  error?: string 
+}> {
+  try {
+    await pool.query(`
+      UPDATE operation_counter 
+      SET count_value = count_value + 1 
+      WHERE id = 1
+    `);
+    return {
+      success: true
+    };
+  } catch (error) {
+    console.error('Operation counter increment error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to increment counter'
+    };
+  }
+}
+
+/**
+ * Get operation counter value
+ */
+export async function getOperationCounter(): Promise<{ 
+  success: boolean; 
+  count?: number;
+  error?: string 
+}> {
+  try {
+    const result = await pool.query(`
+      SELECT count_value 
+      FROM operation_counter 
+      WHERE id = 1
+    `);
+    
+    return {
+      success: true,
+      count: result.rows[0]?.count_value || 0
+    };
+  } catch (error) {
+    console.error('Operation counter fetch error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to fetch counter'
     };
   }
 }

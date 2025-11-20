@@ -1,5 +1,6 @@
 'use client';
 import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
   Container,
   Paper,
@@ -14,11 +15,16 @@ import {
   TextField,
   CircularProgress,
   Alert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton,
 } from '@mui/material';
 import { districts, constituencies, genders } from '@/app/utils/preConfiguredData';
 import { useState, useEffect } from 'react';
 import TamilTransliteratorInput from '@/app/components/TamilTransliterator';
-import { searchElectors, SearchResult } from '@/app/actions/searchActions';
+import { searchElectors, SearchResult, searchFamilyMembers, incrementOperationCounter } from '@/app/actions/searchActions';
 
 type SubmitData = {
   district: {
@@ -57,12 +63,15 @@ export default function DivisionPage() {
     const relationMap: { [key: string]: string } = {
       'த': 'தந்தை',
       'தா': 'தந்தை',
+      'F': 'தந்தை',
       'tha': 'தந்தை',
       'க': 'கணவர்',
+      'H': 'கணவர்',
       'கா': 'கணவர்',
       'ka': 'கணவர்',
       'தய்': 'தாய்',
       'thay': 'தாய்',
+      'M': 'தாய்',
       'ம': 'மனைவி',
       'ma': 'மனைவி',
       'அ': 'அண்ணன்',
@@ -128,6 +137,12 @@ export default function DivisionPage() {
   const [searchError, setSearchError] = useState<string>('');
   const [isMultiColumnView, setIsMultiColumnView] = useState(false);
   const [boothNumberError, setBoothNumberError] = useState<string>('');
+
+  // Family modal state
+  const [familyModalOpen, setFamilyModalOpen] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<SearchResult | null>(null);
+  const [familyMembers, setFamilyMembers] = useState<SearchResult[]>([]);
+  const [isFamilyLoading, setIsFamilyLoading] = useState(false);
 
   // Dynamic age label based on constituency
   const getAgeLabel = () => {
@@ -255,6 +270,80 @@ export default function DivisionPage() {
     setBoothNumberError('');
   };
 
+  const handleFamilyClick = async (member: SearchResult) => {
+    setSelectedMember(member);
+    setFamilyModalOpen(true);
+    setIsFamilyLoading(true);
+    setFamilyMembers([]);
+
+    try {
+      const result = await searchFamilyMembers({
+        doorNo: member.door_no,
+        relativeName: member.relative_name,
+        memberName: member.name,
+        constituencyId: selectedConstituency,
+      });
+
+      if (result.success && result.data) {
+        // Filter out the selected member from the family results
+        let filteredFamily = result.data.filter(familyMember => familyMember.id !== member.id);
+        
+        // If selected member's relation is கணவர் (husband) or மனைவி (wife), filter out family members with same relation type
+        const selectedRelation = member.relation;
+        if (selectedRelation) {
+          // Check if selected member is கணவர் (H, க, கா, ka) or மனைவி (W, ம, ma)
+          const isHusband = ['H', 'க', 'கா', 'ka'].includes(selectedRelation) || 
+                           getRelationText(selectedRelation) === 'கணவர்';
+          const isWife = ['W', 'ம', 'ma'].includes(selectedRelation) || 
+                        getRelationText(selectedRelation) === 'மனைவி';
+          
+          if (isHusband || isWife) {
+            filteredFamily = filteredFamily.filter(familyMember => {
+              const familyRelation = familyMember.relation;
+              if (!familyRelation) return true;
+              
+              const isFamilyHusband = ['H', 'க', 'கா', 'ka'].includes(familyRelation) || 
+                                     getRelationText(familyRelation) === 'கணவர்';
+              const isFamilyWife = ['W', 'ம', 'ma'].includes(familyRelation) || 
+                                  getRelationText(familyRelation) === 'மனைவி';
+              
+              // If selected is husband, exclude other husbands; if selected is wife, exclude other wives
+              if (isHusband) {
+                return !isFamilyHusband;
+              } else {
+                return !isFamilyWife;
+              }
+            });
+          }
+        }
+        
+        // Sort family members: same booth first, then by sequence
+        filteredFamily.sort((a, b) => {
+          const aMatchesBooth = a.booth_no === member.booth_no;
+          const bMatchesBooth = b.booth_no === member.booth_no;
+          
+          if (aMatchesBooth && !bMatchesBooth) return -1;
+          if (!aMatchesBooth && bMatchesBooth) return 1;
+          
+          // If both match or both don't match, sort by sequence
+          return (a.sequence || 0) - (b.sequence || 0);
+        });
+        
+        setFamilyMembers(filteredFamily);
+      }
+    } catch (error) {
+      console.error('Error fetching family members:', error);
+    } finally {
+      setIsFamilyLoading(false);
+    }
+  };
+
+  const handleCloseFamilyModal = () => {
+    setFamilyModalOpen(false);
+    setSelectedMember(null);
+    setFamilyMembers([]);
+  };
+
   const handleSubmit = async () => {
     const districtData = districts.find(d => d.id.toString() === selectedDistrict);
     const constituencyData = constituencies.find(c => c.id.toString() === selectedConstituency);
@@ -287,6 +376,9 @@ export default function DivisionPage() {
     }
     
     setBoothNumberError('');
+
+    // Increment operation counter asynchronously (fire and forget)
+    incrementOperationCounter().catch(err => console.error('Counter increment failed:', err));
 
     // Clear previous results and errors
     setSearchError('');
@@ -347,6 +439,13 @@ export default function DivisionPage() {
 
   return (
     <Container maxWidth="md" sx={{ mt: 4, mb: { xs: 12, sm: 4 } }}>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+        <Link href="/stats" passHref style={{ textDecoration: 'none' }}>
+          <Button variant="outlined" size="small">
+            View Statistics
+          </Button>
+        </Link>
+      </Box>
       <Paper elevation={2} sx={{ p: 4 }}>
         <Stack spacing={3} sx={{ display: { xs: 'flex', sm: 'block' }, flexDirection: { xs: 'column', sm: 'column' } }}>
           {/* <FormControl fullWidth disabled>
@@ -588,9 +687,20 @@ export default function DivisionPage() {
                 {searchResults.map((result) => (
                   <Paper key={result.id} elevation={1} sx={{ p: 2 }}>
                     <Stack spacing={0}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 0.25 }}>
-                        {result.name}
-                      </Typography>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 0.25 }}>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                          {result.name}
+                        </Typography>
+                        <Button 
+                          size="small" 
+                          variant="outlined"
+                          onClick={() => handleFamilyClick(result)}
+                          disabled={!result.door_no || result.door_no === '' || result.door_no.toLowerCase() === 'null'}
+                          sx={{ ml: 1, minWidth: 'auto', px: 1.5 }}
+                        >
+                          Family
+                        </Button>
+                      </Box>
                       
                       <Stack direction="row" spacing={2}>
                         {result.relative_name && (
@@ -636,6 +746,12 @@ export default function DivisionPage() {
                         )}
                       </Stack>
                       
+                      {result.door_no && (
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                          Door No: {result.door_no}
+                        </Typography>
+                      )}
+                      
                       {result.epic && (
                         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                           EPIC: {result.epic}
@@ -652,6 +768,141 @@ export default function DivisionPage() {
           
         </Stack>
       </Paper>
+
+      {/* Family Modal */}
+      <Dialog 
+        open={familyModalOpen} 
+        onClose={handleCloseFamilyModal}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="h6">Family Members</Typography>
+            <IconButton onClick={handleCloseFamilyModal} size="small">
+              <Typography variant="body1">✕</Typography>
+            </IconButton>
+          </Box>
+          {selectedMember && (
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              For: {selectedMember.name} {selectedMember.door_no && `(Door No: ${selectedMember.door_no})`}
+            </Typography>
+          )}
+        </DialogTitle>
+        <DialogContent dividers>
+          {isFamilyLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : familyMembers.length > 0 ? (
+            <Box sx={{ 
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' },
+              gap: 2
+            }}>
+              {familyMembers.map((member) => {
+                const matchesBooth = member.booth_no === selectedMember?.booth_no;
+                return (
+                <Paper 
+                  key={member.id} 
+                  elevation={1} 
+                  sx={{ 
+                    p: 2, 
+                    bgcolor: 'rgba(63, 81, 181, 0.04)',
+                    borderLeft: matchesBooth ? '4px solid #4CAF50' : 'none',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <Stack spacing={0}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.25 }}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                        {member.name}
+                      </Typography>
+                      {matchesBooth && (
+                        <Typography 
+                          component="span" 
+                          variant="caption" 
+                          sx={{ 
+                            color: 'success.main', 
+                            fontWeight: 500,
+                            fontSize: '0.7rem'
+                          }}
+                        >
+                          ● Same Booth
+                        </Typography>
+                      )}
+                    </Box>
+                    
+                    <Stack direction="row" spacing={2}>
+                      {member.relative_name && (
+                        <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                          {member.relative_name}
+                        </Typography>
+                      )}
+                      {member.relative_name && member.relation && (
+                        <Typography variant="body2" color="text.secondary">
+                          -
+                        </Typography>
+                      )}
+                      {member.relation && (
+                        <Typography variant="body2" color="text.secondary">
+                          {getRelationText(member.relation)}
+                        </Typography>
+                      )}
+                    </Stack>
+                    
+                    <Stack direction="row" spacing={2} sx={{ mt: 1.5 }}>
+                      {member.gender && (
+                        <Typography variant="body2" color="text.secondary">
+                          Gender: {getGenderText(member.gender)}
+                        </Typography>
+                      )}
+                      {member.age && (
+                        <Typography variant="body2" color="text.secondary">
+                          Age: {member.age}
+                        </Typography>
+                      )}
+                    </Stack>
+                    
+                    <Stack direction="row" spacing={2} sx={{ mt: 0.5 }}>
+                      {member.serial_no && (
+                        <Typography variant="body2" color="text.secondary">
+                          Sequence: {member.serial_no}
+                        </Typography>
+                      )}
+                      {member.booth_no && (
+                        <Typography variant="body2" color="text.secondary">
+                          Booth: {member.booth_no}
+                        </Typography>
+                      )}
+                    </Stack>
+                    
+                    {member.door_no && (
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                        Door No: {member.door_no}
+                      </Typography>
+                    )}
+                    
+                    {member.epic && (
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                        EPIC: {member.epic}
+                      </Typography>
+                    )}
+                  </Stack>
+                </Paper>
+                );
+              })}
+            </Box>
+          ) : (
+            <Typography variant="body2" color="text.secondary" sx={{ py: 4, textAlign: 'center' }}>
+              No family members found
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseFamilyModal}>Close</Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 }

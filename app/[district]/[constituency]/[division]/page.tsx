@@ -439,13 +439,13 @@ export default function DivisionPage() {
 
   return (
     <Container maxWidth="md" sx={{ mt: 4, mb: { xs: 12, sm: 4 } }}>
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+      {/* <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
         <Link href="/stats" passHref style={{ textDecoration: 'none' }}>
           <Button variant="outlined" size="small">
             View Statistics
           </Button>
         </Link>
-      </Box>
+      </Box> */}
       <Paper elevation={2} sx={{ p: 4 }}>
         <Stack spacing={3} sx={{ display: { xs: 'flex', sm: 'block' }, flexDirection: { xs: 'column', sm: 'column' } }}>
           {/* <FormControl fullWidth disabled>

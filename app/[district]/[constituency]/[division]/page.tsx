@@ -734,7 +734,7 @@ export default function DivisionPage() {
                       </Stack>
                       
                       <Stack direction="row" spacing={2} sx={{ mt: 0.5 }}>
-                        {result.sequence && (
+                        {result.serial_no && (
                           <Typography variant="body2" color="text.secondary">
                             Sequence: {result.serial_no}
                           </Typography>

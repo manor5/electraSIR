@@ -107,6 +107,16 @@ export async function searchElectors(params: SearchParams): Promise<{
       paramIndex++;
     }
 
+    // If constituencyId provided, restrict to that constituency column
+    if (params.constituencyId) {
+      // constituency column in DB may be integer; parse if numeric
+      const raw = params.constituencyId;
+      const numeric = /^\d+$/.test(raw);
+      conditions.push(`constituency = $${paramIndex}`);
+      values.push(numeric ? parseInt(raw) : raw);
+      paramIndex++;
+    }
+
     // Base query
     let query = `
       SELECT 

@@ -55,16 +55,7 @@ export default function FamilyModal(props: any) {
                           <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                             {index + 1}. {member.name}
                           </Typography>
-                          {member.gender && (
-                            <Typography component="span" variant="body2" color="text.secondary" sx={{ ml: 1, fontSize: '0.95rem' }}>
-                              {getGenderText(member.gender)}
-                            </Typography>
-                          )}
-                          {member.age && (
-                            <Typography component="span" variant="body2" color="text.secondary" sx={{ ml: 1, fontSize: '0.9rem' }}>
-                              Age: {member.age}
-                            </Typography>
-                          )}
+                          {/* gender & age moved to the dedicated row below */}
                         </Box>
 
                         <Stack direction="row" spacing={2} sx={{ mb: 1 }}>
@@ -80,6 +71,17 @@ export default function FamilyModal(props: any) {
                         </Stack>
 
                         <Box sx={{ display: 'flex', gap: 2, mt: 1.5 }}>
+                          <Box sx={{ display: 'flex', width: { xs: '100%', sm: '50%' }, justifyContent: 'space-between' }}>
+                            <Typography variant="body2" color="text.secondary">Gender</Typography>
+                            <Typography variant="body2" color="text.secondary">{member.gender ? getGenderText(member.gender) : '-'}</Typography>
+                          </Box>
+                          <Box sx={{ display: 'flex', width: { xs: '100%', sm: '50%' }, justifyContent: 'space-between' }}>
+                            <Typography variant="body2" color="text.secondary">Age</Typography>
+                            <Typography variant="body2" color="text.secondary">{member.age ?? '-'}</Typography>
+                          </Box>
+                        </Box>
+
+                        <Box sx={{ display: 'flex', gap: 2, mt: 0.5 }}>
                           <Box sx={{ display: 'flex', width: '50%', justifyContent: 'space-between' }}>
                             <Typography variant="body2" color="text.secondary">Sequence/வரிசை</Typography>
                             <Typography variant="body2" color="text.secondary">{member.serial_no ?? '-'}</Typography>

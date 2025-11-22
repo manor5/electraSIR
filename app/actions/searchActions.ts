@@ -180,32 +180,55 @@ export async function searchFamilyMembers(params: {
     // Family members are identified by:
     // 1. Same door_no AND relative_name matches (exact)
     // 2. Same door_no AND relative_name matches with member's name (exact)
+    // Require same door_no AND booth_no, plus name/relative_name matches.
+    // If boothNo is missing or invalid, return empty result.
     if (params.doorNo && (params.relativeName || params.memberName)) {
+      if (params.boothNo === undefined || params.boothNo === null || params.boothNo === '') {
+        return { success: true, data: [] };
+      }
+
+      const boothNum = typeof params.boothNo === 'string' ? parseInt(params.boothNo as string) : (params.boothNo as number);
+      if (isNaN(boothNum)) {
+        return { success: true, data: [] };
+      }
+
+      // require same door and booth
       conditions.push(`door_no = $${paramIndex}`);
       values.push(params.doorNo);
       paramIndex++;
 
-      if (params.relativeName && params.memberName) {
-        conditions.push(`(relative_name = $${paramIndex} OR relative_name = $${paramIndex + 1})`);
-        values.push(params.relativeName);
-        values.push(params.memberName);
-        paramIndex += 2;
-      } else if (params.relativeName) {
-        conditions.push(`relative_name = $${paramIndex}`);
+      conditions.push(`booth_no = $${paramIndex}`);
+      values.push(boothNum);
+      paramIndex++;
+
+      // build the OR group for name/relative_name matches
+      const orClauses: string[] = [];
+      if (params.relativeName) {
+        orClauses.push(`relative_name = $${paramIndex}`);
         values.push(params.relativeName);
         paramIndex++;
+
+        orClauses.push(`name = $${paramIndex}`);
+        values.push(params.relativeName);
+        paramIndex++;
+      }
+
+      if (params.memberName) {
+        orClauses.push(`relative_name = $${paramIndex}`);
+        values.push(params.memberName);
+        paramIndex++;
+
+        orClauses.push(`name = $${paramIndex}`);
+        values.push(params.memberName);
+        paramIndex++;
+      }
+
+      if (orClauses.length > 0) {
+        conditions.push(`(${orClauses.join(' OR ')})`);
       }
     }
 
-    // If booth number provided, restrict to same booth as well
-    if (params.boothNo !== undefined && params.boothNo !== null && params.boothNo !== '') {
-      const boothNum = typeof params.boothNo === 'string' ? parseInt(params.boothNo as string) : (params.boothNo as number);
-      if (!isNaN(boothNum)) {
-        conditions.push(`booth_no = $${paramIndex}`);
-        values.push(boothNum);
-        paramIndex++;
-      }
-    }
+    
 
     if (conditions.length === 0) {
       return {

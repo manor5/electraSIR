@@ -11,7 +11,7 @@ export const districts = [
 
 export const constituencies = [
 
-  { id: 167, name: "Srirangam", districtId: 19 },
+  // { id: 167, name: "Srirangam", districtId: 19 },
   { id: 166, name: "Tiruchirapalli II", districtId: 19 },
 ];
 // export const constituencies = [

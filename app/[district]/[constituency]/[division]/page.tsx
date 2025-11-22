@@ -217,6 +217,19 @@ export default function DivisionPage() {
     }
   }, [params.district, params.constituency]);
 
+  // If English name fields are cleared, clear the corresponding Tamil name fields
+  useEffect(() => {
+    if (electorNameEnglish.trim() === '') {
+      setElectorName('');
+    }
+  }, [electorNameEnglish]);
+
+  useEffect(() => {
+    if (relationNameEnglish.trim() === '') {
+      setRelationName('');
+    }
+  }, [relationNameEnglish]);
+
   const handleDistrictChange = (districtId: string) => {
     setSelectedDistrict(districtId);
     setSelectedConstituency('');

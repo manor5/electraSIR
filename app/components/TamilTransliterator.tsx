@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, ChangeEvent, useCallback, KeyboardEvent } from 'react';
+import { useState, ChangeEvent, useCallback, KeyboardEvent, useEffect, useRef } from 'react';
 import { TextField, TextFieldProps, Box, Stack, Typography } from '@mui/material';
 
 // Simple transliteration function using Google Input Tools API
@@ -39,72 +39,48 @@ export default function TamilTransliteratorInput({
   onEnglishChange,
   ...textFieldProps 
 }: TamilTransliteratorInputProps) {
-  const [currentText, setCurrentText] = useState('');
-  const [isTransliterating, setIsTransliterating] = useState(false);
-  console.log({ englishValue,value, currentText });
 
-  const performTransliteration = useCallback(async (text: string) => {
-    if (!text || !text.trim()) {
-      return;
-    }
-
-    setIsTransliterating(true);
-    try {
-      const result = await transliterateText(text);
-      // Append to existing Tamil text with a space
-      onChange(value + (value ? ' ' : '') + result);
-      if (onEnglishChange) {
-        onEnglishChange(englishValue + text + ' ');
-      }
-      setCurrentText('');
-    } catch (error) {
-      console.error('Error during transliteration:', error);
-    } finally {
-      setIsTransliterating(false);
-    }
-  }, [onChange, value, onEnglishChange, englishValue]);
+  
+  console.log("Rendering TamilTransliteratorInput with value:", value, "and englishValue:", englishValue);
 
   const handleTextChange = useCallback(async (e: ChangeEvent<HTMLInputElement>) => {
     const inputText = e.target.value;
-    
+    console.log("handleTextChange inputText:", inputText);
     if (onEnglishChange) {
       onEnglishChange(inputText);
     }
-    
+     if(inputText.trim() === '') {
+      console.log("cleared onChange")
+      // bump request id to ignore any inflight transliteration responses
+      requestId.current += 1;
+      onChange('');
+      return;
+    }
     // Transliterate as user types
     if (inputText.trim()) {
+      const currentId = ++requestId.current;
       const result = await transliterateText(inputText);
+      // ignore if another request started after this one
+      if (currentId !== requestId.current) return;
       onChange(result);
     } else {
       onChange('');
     }
     
-    setCurrentText('');
   }, [onEnglishChange, onChange]);
 
-  const handleKeyDown = useCallback(async (e: KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === ' ') {
-      e.preventDefault();
-      const text = currentText?.trim();
-      if (text) {
-        await performTransliteration(text);
-      }
-    }
-  }, [currentText, performTransliteration]);
+  // use a ref to track the latest transliteration request so we can ignore
+  // stale async responses (prevents old fetches from overwriting cleared state)
+  const requestId = useRef(0);
 
-  const handleBlur = useCallback(async () => {
-    if (currentText && currentText.trim()) {
-      await performTransliteration(currentText);
-    }
-  }, [currentText, performTransliteration]);
-
+  
   return (
     <Box sx={{ width: '100%' }}>
       <TextField
         {...textFieldProps}
         value={englishValue}
         onChange={handleTextChange}
-        disabled={isTransliterating || textFieldProps.disabled}
+        disabled={  textFieldProps.disabled}
         placeholder={textFieldProps.placeholder || "Type in English..."}
         size="small"
         sx={{ width: '100%', ...textFieldProps.sx }}

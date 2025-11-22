@@ -47,8 +47,8 @@ export function useSyncEnglishClears(
   setRelationName: (v: string) => void,
 ) {
   useEffect(() => {
-    console.log("name",electorNameEnglish)
-    if ((electorNameEnglish || '').trim() === '') setElectorName('');
-    if ((relationNameEnglish || '').trim() === '') setRelationName('');
+    if ((electorNameEnglish || '').trim() === '') {
+        setElectorName('');}
+    if ((relationNameEnglish || '').trim() === '') {setRelationName('');}
   }, [electorNameEnglish, relationNameEnglish, setElectorName, setRelationName]);
 }

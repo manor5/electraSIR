@@ -92,7 +92,7 @@ export async function searchElectors(params: SearchParams): Promise<{
         if (params.birthYear && params.constituencyId) {
       // Compute age based on birth year and constituency
       const birthYear = parseInt(params.birthYear);
-      const referenceYear = params.constituencyId === '167' ? 2005 : 2002;
+      const referenceYear = params.constituencyId === '167' || params.constituencyId === '166' ? 2005 : 2002;
       const computedAge = referenceYear - birthYear;
       
       // Search for age range: computedAge-1, computedAge, computedAge+1

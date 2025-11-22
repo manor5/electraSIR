@@ -40,7 +40,6 @@ export async function searchElectors(params: SearchParams): Promise<{
     const conditions: string[] = [];
     const values: any[] = [];
     let paramIndex = 1;
-    console.log('Search parameters:', params);
     // Build dynamic WHERE clause based on provided parameters
     if (params.name) {
       conditions.push(`name ILIKE $${paramIndex}`);
@@ -133,8 +132,6 @@ export async function searchElectors(params: SearchParams): Promise<{
     // Add ORDER BY and LIMIT
     query += ' ORDER BY sequence LIMIT 1200';
 
-    console.log('Executing query:', query);
-    console.log('With values:', values);
 
     const result = await pool.query(query, values);
 
@@ -159,6 +156,7 @@ export async function searchFamilyMembers(params: {
   relativeName?: string;
   memberName?: string;
   constituencyId?: string;
+  boothNo?: string | number;
 }): Promise<{ 
   success: boolean; 
   data?: SearchResult[]; 
@@ -189,6 +187,16 @@ export async function searchFamilyMembers(params: {
       }
     }
 
+    // If booth number provided, restrict to same booth as well
+    if (params.boothNo !== undefined && params.boothNo !== null && params.boothNo !== '') {
+      const boothNum = typeof params.boothNo === 'string' ? parseInt(params.boothNo as string) : (params.boothNo as number);
+      if (!isNaN(boothNum)) {
+        conditions.push(`booth_no = $${paramIndex}`);
+        values.push(boothNum);
+        paramIndex++;
+      }
+    }
+
     if (conditions.length === 0) {
       return {
         success: true,
@@ -215,8 +223,6 @@ export async function searchFamilyMembers(params: {
       LIMIT 50
     `;
 
-    console.log('Executing family search query:', query);
-    console.log('With values:', values);
 
     const result = await pool.query(query, values);
 

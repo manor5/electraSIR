@@ -1,0 +1,147 @@
+"use client";
+import React from 'react';
+import { Box, Paper, Stack, Typography, Button } from '@mui/material';
+import { SearchResult } from '@/app/actions/searchActions';
+
+export default function SearchResults(props: any) {
+  const { searchResults, isMultiColumnView, setIsMultiColumnView, handleFamilyClick, getRelationText, getGenderText, displayDoor, displayEpic } = props;
+
+  if (!searchResults || searchResults.length === 0) return null;
+
+  return (
+    <Box sx={{ mt: 4 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+          Search Results ({searchResults.length})
+        </Typography>
+        <Button variant="outlined" size="small" onClick={() => setIsMultiColumnView(!isMultiColumnView)} sx={{ display: { xs: 'none', sm: 'block' } }}>
+          {isMultiColumnView ? 'Single Column' : 'Multi Column'}
+        </Button>
+      </Box>
+
+      {isMultiColumnView ? (
+        <Box sx={{ display: 'grid', justifyContent: 'center', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0,48%))' }, gap: 2 }}>
+          {searchResults.map((result: SearchResult, index: number) => (
+            <Paper key={result.id} elevation={1} sx={{ p: 2, boxSizing: 'border-box', width: '100%' }}>
+              <Stack spacing={0}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 0.25 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                      {index + 1}. {result.name}
+                    </Typography>
+                    {result.gender && (
+                      <Typography component="span" variant="body2" color="text.secondary" sx={{ ml: 1, fontSize: '0.95rem' }}>
+                        {getGenderText(result.gender)}
+                      </Typography>
+                    )}
+                    {result.age && (
+                      <Typography component="span" variant="body2" color="text.secondary" sx={{ ml: 1, fontSize: '0.9rem' }}>
+                        Age: {result.age}
+                      </Typography>
+                    )}
+                  </Box>
+                  <Button size="small" variant="outlined" onClick={() => handleFamilyClick(result)} disabled={!displayDoor(result.door_no) || displayDoor(result.door_no) === '-'} sx={{ ml: 1, minWidth: 'auto', px: 1.5 }}>
+                    Family
+                  </Button>
+                </Box>
+
+                <Stack direction="row" spacing={2} sx={{ mt: 0, mb: 1 }}>
+                  {result.relative_name && (
+                    <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                      {result.relative_name}
+                    </Typography>
+                  )}
+                  {result.relative_name && result.relation && <Typography variant="body2" color="text.secondary">-</Typography>}
+                  {result.relation && <Typography variant="body2" color="text.secondary">{getRelationText(result.relation)}</Typography>}
+                </Stack>
+
+                <Box sx={{ display: 'flex', gap: 2, mt: 0.5 }}>
+                  <Box sx={{ display: 'flex', width: '50%', justifyContent: 'space-between' }}>
+                    <Typography variant="body2" color="text.secondary">Seq/வரிசை</Typography>
+                    <Typography variant="body2" color="text.secondary">{result.serial_no ?? '-'}</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', width: '50%', justifyContent: 'space-between' }}>
+                    <Typography variant="body2" color="text.secondary">Booth</Typography>
+                    <Typography variant="body2" color="text.secondary">{result.booth_no ?? '-'}</Typography>
+                  </Box>
+                </Box>
+
+                <Box sx={{ display: 'flex', gap: 2, mt: 0.5 }}>
+                  <Box sx={{ display: 'flex', width: '50%', justifyContent: 'space-between' }}>
+                    <Typography variant="body2" color="text.secondary">Door No</Typography>
+                    <Typography variant="body2" color="text.secondary">{displayDoor(result.door_no)}</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', width: '50%', justifyContent: 'space-between' }}>
+                    <Typography variant="body2" color="text.secondary">EPIC</Typography>
+                    <Typography variant="body2" color="text.secondary">{displayEpic(result.epic)}</Typography>
+                  </Box>
+                </Box>
+              </Stack>
+            </Paper>
+          ))}
+        </Box>
+      ) : (
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2 }}>
+          {searchResults.map((result: SearchResult, index: number) => (
+            <Paper key={result.id} elevation={1} sx={{ p: 2, boxSizing: 'border-box', width: '48%' }}>
+              <Stack spacing={0}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 0.25 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                      {index + 1}. {result.name}
+                    </Typography>
+                    {result.gender && (
+                      <Typography component="span" variant="body2" color="text.secondary" sx={{ ml: 1, fontSize: '0.95rem' }}>
+                        {getGenderText(result.gender)}
+                      </Typography>
+                    )}
+                    {result.age && (
+                      <Typography component="span" variant="body2" color="text.secondary" sx={{ ml: 1, fontSize: '0.9rem' }}>
+                        Age: {result.age}
+                      </Typography>
+                    )}
+                  </Box>
+                  <Button size="small" variant="outlined" onClick={() => handleFamilyClick(result)} disabled={!displayDoor(result.door_no) || displayDoor(result.door_no) === '-'} sx={{ ml: 1, minWidth: 'auto', px: 1.5 }}>
+                    Family
+                  </Button>
+                </Box>
+
+                <Stack direction="row" spacing={2} sx={{ mt: 0, mb: 1 }}>
+                  {result.relative_name && (
+                    <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                      {result.relative_name}
+                    </Typography>
+                  )}
+                  {result.relative_name && result.relation && <Typography variant="body2" color="text.secondary">-</Typography>}
+                  {result.relation && <Typography variant="body2" color="text.secondary">{getRelationText(result.relation)}</Typography>}
+                </Stack>
+
+                <Box sx={{ display: 'flex', gap: 2, mt: 0.5 }}>
+                  <Box sx={{ display: 'flex', width: '50%', justifyContent: 'space-between' }}>
+                    <Typography variant="body2" color="text.secondary">Seq/வரிசை</Typography>
+                    <Typography variant="body2" color="text.secondary">{result.serial_no ?? '-'}</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', width: '50%', justifyContent: 'space-between' }}>
+                    <Typography variant="body2" color="text.secondary">Booth</Typography>
+                    <Typography variant="body2" color="text.secondary">{result.booth_no ?? '-'}</Typography>
+                  </Box>
+                </Box>
+
+                <Box sx={{ display: 'flex', gap: 2, mt: 0.5 }}>
+                  <Box sx={{ display: 'flex', width: '50%', justifyContent: 'space-between' }}>
+                    <Typography variant="body2" color="text.secondary">Door No</Typography>
+                    <Typography variant="body2" color="text.secondary">{displayDoor(result.door_no)}</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', width: '50%', justifyContent: 'space-between' }}>
+                    <Typography variant="body2" color="text.secondary">EPIC</Typography>
+                    <Typography variant="body2" color="text.secondary">{displayEpic(result.epic)}</Typography>
+                  </Box>
+                </Box>
+              </Stack>
+            </Paper>
+          ))}
+        </Box>
+      )}
+    </Box>
+  );
+}

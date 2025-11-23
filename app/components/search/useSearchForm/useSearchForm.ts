@@ -60,9 +60,15 @@ export default function useSearchForm() {
 
   const handleConstituencyChange = (constituencyId: string) => {
     setSelectedConstituency(constituencyId);
+    // If constituency is not Tiruchirapalli II (id 166), clear birth-year and derived age
+    if (constituencyId !== '166') {
+      setYearOfBirth('');
+      setAge('');
+    }
   };
 
-  const getAgeLabel = () => selectedConstituency === '167' ? 'Age at 2005' : 'Age at 2002';
+  // Note: age reference year is 2005 for Tiruchirapalli II (id 166)
+  const getAgeLabel = () => selectedConstituency === '166' ? 'Age at 2005' : 'Age at 2002';
 
   const calculateAgeFromYear = (year: string) => {
     if (!year) return '';

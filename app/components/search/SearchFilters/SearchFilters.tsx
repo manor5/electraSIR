@@ -45,6 +45,8 @@ export default function SearchFilters(props: any) {
     originalAge,
   } = props;
 
+  const ageEnabled = selectedConstituency === '166';
+
   return (
     <>
       <FormControl fullWidth>
@@ -135,15 +137,17 @@ export default function SearchFilters(props: any) {
               </FormControl>
             </Stack>
 
-            <TextField
-              label="Birth Year"
-              type="number"
-              value={yearOfBirth}
-              onChange={(e) => handleYearOfBirthChange(e.target.value)}
-              placeholder="YYYY"
-              sx={{ width: '100%' }}
-              size="small"
-            />
+            {ageEnabled && (
+              <TextField
+                label="Birth Year"
+                type="number"
+                value={yearOfBirth}
+                onChange={(e) => handleYearOfBirthChange(e.target.value)}
+                placeholder="YYYY"
+                sx={{ width: '100%' }}
+                size="small"
+              />
+            )}
           </Box>
 
           <Stack direction="row" spacing={2} sx={{ width: '100%', display: { xs: 'none', sm: 'flex' } }}>
@@ -172,15 +176,17 @@ export default function SearchFilters(props: any) {
                 ))}
               </Select>
             </FormControl>
-            <TextField
-              label="Birth Year"
-              type="number"
-              value={yearOfBirth}
-              onChange={(e) => handleYearOfBirthChange(e.target.value)}
-              placeholder="YYYY"
-              sx={{ width: '200px', flex: 1 }}
-              size="small"
-            />
+            {ageEnabled && (
+              <TextField
+                label="Birth Year"
+                type="number"
+                value={yearOfBirth}
+                onChange={(e) => handleYearOfBirthChange(e.target.value)}
+                placeholder="YYYY"
+                sx={{ width: '200px', flex: 1 }}
+                size="small"
+              />
+            )}
           </Stack>
         </Stack>
       </Box>

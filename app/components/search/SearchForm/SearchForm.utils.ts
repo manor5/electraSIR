@@ -3,7 +3,7 @@ import { SearchResult } from '@/app/actions/searchActions';
 export const getRelationText = (relationCode: string = ''): string => {
   const relationMap: { [key: string]: string } = {
     'த': 'தந்தை',
-    'தா': 'தந்தை',
+    'தா': 'தாத்தா',
     'f': 'தந்தை',
     'tha': 'தந்தை',
     'க': 'கணவர்',

@@ -280,15 +280,7 @@ export async function incrementOperationCounter(params: SearchParams): Promise<{
   success: boolean; 
   error?: string 
 }> {
-  try {
-        await pool.query(
-          'INSERT INTO search_logs (search_params) VALUES ($1)',
-          [JSON.stringify(params)]
-        );
-      } catch (logError) {
-        console.error('Search logging error:', logError);
-        // Don't fail the search if logging fails
-      }
+  
   try {
     await pool.query(`
       UPDATE operation_counter 

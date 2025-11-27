@@ -196,15 +196,7 @@ export default function useSearchForm() {
     }
 
     setBoothNumberError('');
-
-    incrementOperationCounter().catch(err => console.error('Counter increment failed:', err));
-
-    setSearchError('');
-    setSearchResults([]);
-    setIsSearching(true);
-
-    try {
-      const result = await searchElectors({
+    const searchParams = {
         name: electorName || undefined,
         relativeName: relationName || undefined,
         boothNumber: cleanedBoothNumber || undefined,
@@ -212,7 +204,16 @@ export default function useSearchForm() {
         age: age ? parseInt(age) : undefined,
         constituencyId: selectedConstituency || undefined,
         birthYear: yearOfBirth || undefined,
-      });
+      }
+
+    incrementOperationCounter(searchParams).catch(err => console.error('Counter increment failed:', err));
+
+    setSearchError('');
+    setSearchResults([]);
+    setIsSearching(true);
+
+    try {
+      const result = await searchElectors(searchParams);
 
       if (result.success && result.data) {
         const searchNameRaw = (electorName || electorNameEnglish || '').trim();

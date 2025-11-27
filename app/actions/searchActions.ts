@@ -37,6 +37,19 @@ export async function searchElectors(params: SearchParams): Promise<{
   error?: string 
 }> {
   try {
+    // Log search params if logging is enabled
+    if (process.env.ENABLE_SEARCH_LOGGING === 'true') {
+      try {
+        await pool.query(
+          'INSERT INTO search_logs (search_params) VALUES ($1)',
+          [JSON.stringify(params)]
+        );
+      } catch (logError) {
+        console.error('Search logging error:', logError);
+        // Don't fail the search if logging fails
+      }
+    }
+
     const conditions: string[] = [];
     const values: any[] = [];
     let paramIndex = 1;

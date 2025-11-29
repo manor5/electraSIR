@@ -43,9 +43,9 @@ export default function StatsPage() {
   return (
     <Container maxWidth="sm" sx={{ mt: 8, mb: 4 }}>
       <Box sx={{ display: 'flex', justifyContent: 'flex-start', mb: 2 }}>
-        <Link href="/19/166/10" passHref style={{ textDecoration: 'none' }}>
+        <Link href="/dashboard" passHref style={{ textDecoration: 'none' }}>
           <Button variant="outlined" size="small">
-            ← Back to Search
+            ← Back to Dashboard
           </Button>
         </Link>
       </Box>

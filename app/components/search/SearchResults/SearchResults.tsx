@@ -4,7 +4,23 @@ import { Box, Paper, Stack, Typography, Button } from '@mui/material';
 import { SearchResult } from '@/app/actions/searchActions';
 
 export default function SearchResults(props: any) {
-  const { searchResults, isMultiColumnView, setIsMultiColumnView, handleFamilyClick, getRelationText, getGenderText, displayDoor, displayEpic } = props;
+  const { searchResults, isMultiColumnView, setIsMultiColumnView, handleFamilyClick, getRelationText, getGenderText, displayDoor, displayEpic, searchPerformed } = props;
+
+  // Show "no records found" message if search was performed but no results
+  if (searchPerformed && (!searchResults || searchResults.length === 0)) {
+    return (
+      <Box sx={{ mt: 4, textAlign: 'center' }}>
+        <Paper elevation={1} sx={{ p: 4, bgcolor: 'grey.50' }}>
+          <Typography variant="h6" color="text.secondary" gutterBottom>
+            No Records Found
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            No matching records were found for your search criteria. Please try different search parameters.
+          </Typography>
+        </Paper>
+      </Box>
+    );
+  }
 
   if (!searchResults || searchResults.length === 0) return null;
 

@@ -161,14 +161,16 @@ export async function getSavedQueries(): Promise<{
     query: string;
     groupName: string | null;
     createdAt: Date;
+    displayOrder: number;
   }>;
   error?: string;
 }> {
   try {
     const result = await pool.query(
-      `SELECT id, name, query, group_name, created_at 
+      `SELECT id, name, query, group_name, created_at, 
+              COALESCE(display_order, 0) as display_order
        FROM saved_queries 
-       ORDER BY group_name NULLS LAST, created_at DESC`
+       ORDER BY group_name NULLS LAST, display_order ASC, created_at DESC`
     );
     
     const queries = result.rows.map(row => ({
@@ -177,6 +179,7 @@ export async function getSavedQueries(): Promise<{
       query: row.query,
       groupName: row.group_name,
       createdAt: row.created_at,
+      displayOrder: row.display_order,
     }));
     
     return {
@@ -210,6 +213,68 @@ export async function deleteSavedQuery(id: number): Promise<{
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to delete query',
+    };
+  }
+}
+
+/**
+ * Update a saved query
+ */
+export async function updateSavedQuery(
+  id: number,
+  name: string,
+  query: string,
+  groupName?: string
+): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    await pool.query(
+      `UPDATE saved_queries 
+       SET name = $1, query = $2, group_name = $3, updated_at = NOW() 
+       WHERE id = $4`,
+      [name, query, groupName || null, id]
+    );
+    
+    return {
+      success: true,
+    };
+  } catch (error) {
+    console.error('Update query error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to update query',
+    };
+  }
+}
+
+/**
+ * Update display order for queries
+ */
+export async function updateQueryOrder(
+  id: number,
+  newOrder: number
+): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    await pool.query(
+      `UPDATE saved_queries 
+       SET display_order = $1, updated_at = NOW() 
+       WHERE id = $2`,
+      [newOrder, id]
+    );
+    
+    return {
+      success: true,
+    };
+  } catch (error) {
+    console.error('Update query order error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to update query order',
     };
   }
 }

@@ -32,6 +32,7 @@ export default function useSearchForm() {
   const [searchError, setSearchError] = useState<string>('');
   const [isMultiColumnView, setIsMultiColumnView] = useState(false);
   const [boothNumberError, setBoothNumberError] = useState<string>('');
+  const [searchPerformed, setSearchPerformed] = useState(false);
 
   const [familyModalOpen, setFamilyModalOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<SearchResult | null>(null);
@@ -99,6 +100,7 @@ export default function useSearchForm() {
     setSearchResults([]);
     setSearchError('');
     setBoothNumberError('');
+    setSearchPerformed(false);
     if (originalDistrict) {
       const filtered = constituencies.filter(c => c.districtId === parseInt(originalDistrict));
       setFilteredConstituencies(filtered);
@@ -210,6 +212,7 @@ export default function useSearchForm() {
 
     setSearchError('');
     setSearchResults([]);
+    setSearchPerformed(false);
     setIsSearching(true);
 
     try {
@@ -225,6 +228,7 @@ export default function useSearchForm() {
         } else {
           setSearchResults(result.data);
         }
+        setSearchPerformed(true);
       } else {
         setSearchError(result.error || 'Search failed');
       }
@@ -256,6 +260,7 @@ export default function useSearchForm() {
     searchError,
     isMultiColumnView,
     boothNumberError,
+    searchPerformed,
     familyModalOpen,
     selectedMember,
     familyMembers,

@@ -37,6 +37,7 @@ export default function SearchForm() {
     searchError,
     isMultiColumnView,
     boothNumberError,
+    searchPerformed,
     familyModalOpen,
     selectedMember,
     familyMembers,
@@ -114,6 +115,7 @@ export default function SearchForm() {
               getGenderText={getGenderText}
               displayDoor={displayDoor}
               displayEpic={displayEpic}
+              searchPerformed={searchPerformed}
             />
           </Box>
         </Stack>

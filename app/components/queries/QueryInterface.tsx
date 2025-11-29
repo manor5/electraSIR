@@ -36,12 +36,20 @@ import {
   Divider,
   Autocomplete,
   ListSubheader,
+  Menu,
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import SaveIcon from '@mui/icons-material/Save';
 import FolderIcon from '@mui/icons-material/Folder';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { executeQuery, getTables, getTableColumns, saveQuery, getSavedQueries, deleteSavedQuery, getQueryGroups, importCsvData } from '@/app/actions/queryActions';
+import DownloadIcon from '@mui/icons-material/Download';
+import EditIcon from '@mui/icons-material/Edit';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
+import { executeQuery, getTables, getTableColumns, saveQuery, getSavedQueries, deleteSavedQuery, getQueryGroups, importCsvData, updateSavedQuery, updateQueryOrder } from '@/app/actions/queryActions';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -74,6 +82,7 @@ export default function QueryInterface() {
   const [queryResult, setQueryResult] = useState<any>(null);
   const [queryError, setQueryError] = useState('');
   const [executeSentinel, setExecuteSentinel] = useState('');
+  const [downloading, setDownloading] = useState(false);
 
   // Query Builder tab state
   const [tables, setTables] = useState<string[]>([]);
@@ -89,7 +98,7 @@ export default function QueryInterface() {
   const [filePath, setFilePath] = useState('');
   
   // Saved queries state
-  const [savedQueries, setSavedQueries] = useState<Array<{id: number, name: string, query: string, groupName: string | null, createdAt: Date}>>([]);
+  const [savedQueries, setSavedQueries] = useState<Array<{id: number, name: string, query: string, groupName: string | null, createdAt: Date, displayOrder: number}>>([]);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [queryName, setQueryName] = useState('');
   const [queryGroup, setQueryGroup] = useState<string>('');
@@ -97,6 +106,18 @@ export default function QueryInterface() {
   const [selectedGroupFilter, setSelectedGroupFilter] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [savedQueriesSentinel, setSavedQueriesSentinel] = useState('');
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingQuery, setEditingQuery] = useState<{id: number, name: string, query: string, groupName: string | null} | null>(null);
+  const [editQueryName, setEditQueryName] = useState('');
+  const [editQueryText, setEditQueryText] = useState('');
+  const [editQueryGroup, setEditQueryGroup] = useState<string>('');
+  const [editQueryOrder, setEditQueryOrder] = useState<number>(0);
+  const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+  const [selectedQueryForMenu, setSelectedQueryForMenu] = useState<{id: number, name: string, query: string, groupName: string | null, createdAt: Date, displayOrder: number} | null>(null);
+  
+  // Drag and drop state
+  const [draggedQuery, setDraggedQuery] = useState<{id: number, name: string, query: string, groupName: string | null, createdAt: Date, displayOrder: number} | null>(null);
+  const [dragOverQuery, setDragOverQuery] = useState<{id: number, name: string, query: string, groupName: string | null, createdAt: Date, displayOrder: number} | null>(null);
   
   // CSV Upload state
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -116,6 +137,59 @@ export default function QueryInterface() {
       loadColumns(selectedTable);
     }
   }, [selectedTable]);
+
+  // Utility function to determine query risk level
+  const getQueryRiskLevel = (query: string): 'safe' | 'moderate' | 'dangerous' => {
+    const trimmed = query.trim().toLowerCase();
+    
+    // Remove comments for better parsing
+    const noComments = trimmed
+      .replace(/--[^\n]*/g, '') // Remove single-line comments
+      .replace(/\/\*[\s\S]*?\*\//g, ''); // Remove multi-line comments
+    
+    // Dangerous operations (red)
+    const dangerousKeywords = ['delete', 'drop', 'truncate', 'alter'];
+    const hasDangerous = dangerousKeywords.some(keyword => 
+      new RegExp(`\\b${keyword}\\b`, 'i').test(noComments)
+    );
+    if (hasDangerous) {
+      return 'dangerous';
+    }
+    
+    // Moderate operations (yellow) - INSERT, UPDATE, CREATE, etc.
+    const moderateKeywords = ['insert', 'update', 'create', 'grant', 'revoke', 'merge'];
+    const hasModerate = moderateKeywords.some(keyword => 
+      new RegExp(`\\b${keyword}\\b`, 'i').test(noComments)
+    );
+    if (hasModerate) {
+      return 'moderate';
+    }
+    
+    // Safe operations (green) - SELECT, WITH, SHOW, EXPLAIN, etc.
+    return 'safe';
+  };
+
+  const getRiskColor = (riskLevel: 'safe' | 'moderate' | 'dangerous') => {
+    switch (riskLevel) {
+      case 'safe':
+        return '#e8f5e9'; // light green
+      case 'moderate':
+        return '#fff8e1'; // light yellow
+      case 'dangerous':
+        return '#ffebee'; // light red
+    }
+  };
+
+  const getRiskBorderColor = (riskLevel: 'safe' | 'moderate' | 'dangerous') => {
+    switch (riskLevel) {
+      case 'safe':
+        return '#4caf50'; // green
+      case 'moderate':
+        return '#ff9800'; // orange
+      case 'dangerous':
+        return '#f44336'; // red
+    }
+  };
 
   const loadTables = async () => {
     const result = await getTables();
@@ -304,6 +378,125 @@ export default function QueryInterface() {
     }
   };
 
+  const handleDownloadCSV = () => {
+    if (!queryResult || !queryResult.rows || queryResult.rows.length === 0) return;
+
+    // Create CSV content
+    const columns = queryResult.columns;
+    const rows = queryResult.rows;
+
+    // Header row
+    const csvHeader = columns.join(',');
+
+    // Data rows
+    const csvRows = rows.map((row: any) => {
+      return columns.map((col: string) => {
+        const value = row[col];
+        if (value === null || value === undefined) return '';
+        
+        // Escape values that contain commas, quotes, or newlines
+        const stringValue = String(value);
+        if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+          return `"${stringValue.replace(/"/g, '""')}"`;
+        }
+        return stringValue;
+      }).join(',');
+    });
+
+    const csvContent = [csvHeader, ...csvRows].join('\n');
+
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `query_results_${new Date().getTime()}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleDirectDownloadCSV = async () => {
+    if (!query.trim()) {
+      setQueryError('Please enter a query');
+      return;
+    }
+
+    setDownloading(true);
+    setQueryError('');
+
+    try {
+      // Check if query is non-SELECT and requires authorization
+      const trimmedQuery = query.trim().toLowerCase();
+      const isSelectQuery = trimmedQuery.startsWith('select') || 
+                           trimmedQuery.startsWith('with') || 
+                           trimmedQuery.startsWith('show') ||
+                           trimmedQuery.startsWith('explain');
+      
+      if (!isSelectQuery) {
+        // Check authorization code
+        if (executeSentinel !== '#mano') {
+          setQueryError('You do not have permission for this operation.');
+          setDownloading(false);
+          return;
+        }
+      }
+      
+      const result = await executeQuery(query);
+      
+      if (result.success && result.data) {
+        // Create CSV and download without displaying
+        const columns = result.data.columns;
+        const rows = result.data.rows;
+
+        if (rows.length === 0) {
+          setQueryError('Query returned no results');
+          setDownloading(false);
+          return;
+        }
+
+        // Header row
+        const csvHeader = columns.join(',');
+
+        // Data rows
+        const csvRows = rows.map((row: any) => {
+          return columns.map((col: string) => {
+            const value = row[col];
+            if (value === null || value === undefined) return '';
+            
+            // Escape values that contain commas, quotes, or newlines
+            const stringValue = String(value);
+            if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+              return `"${stringValue.replace(/"/g, '""')}"`;
+            }
+            return stringValue;
+          }).join(',');
+        });
+
+        const csvContent = [csvHeader, ...csvRows].join('\n');
+
+        // Create blob and download
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `query_results_${new Date().getTime()}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        setQueryError(result.error || 'Query execution failed');
+      }
+    } catch (err) {
+      setQueryError('An error occurred while executing the query');
+      console.error('Query execution error:', err);
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   const loadSavedQueries = async () => {
     const result = await getSavedQueries();
     if (result.success && result.queries) {
@@ -345,6 +538,267 @@ export default function QueryInterface() {
     const result = await deleteSavedQuery(id);
     if (result.success) {
       await loadSavedQueries();
+    }
+  };
+
+  const handleEditQuery = (savedQuery: {id: number, name: string, query: string, groupName: string | null, displayOrder?: number}) => {
+    setEditingQuery(savedQuery);
+    setEditQueryName(savedQuery.name);
+    setEditQueryText(savedQuery.query);
+    setEditQueryGroup(savedQuery.groupName || '');
+    setEditQueryOrder(savedQuery.displayOrder || 0);
+    setEditDialogOpen(true);
+  };
+
+  const handleUpdateQuery = async () => {
+    if (!editingQuery || !editQueryName.trim() || !editQueryText.trim()) return;
+    
+    const result = await updateSavedQuery(
+      editingQuery.id,
+      editQueryName.trim(),
+      editQueryText.trim(),
+      editQueryGroup || undefined
+    );
+    
+    if (result.success) {
+      // Update display order if changed
+      await updateQueryOrder(editingQuery.id, editQueryOrder);
+      await loadSavedQueries();
+      setEditDialogOpen(false);
+      setEditingQuery(null);
+      setEditQueryName('');
+      setEditQueryText('');
+      setEditQueryGroup('');
+      setEditQueryOrder(0);
+    } else {
+      alert('Failed to update query: ' + result.error);
+    }
+  };
+
+
+  // Drag and drop handlers
+  const handleDragStart = (e: React.DragEvent, query: {id: number, name: string, query: string, groupName: string | null, createdAt: Date, displayOrder: number}) => {
+    e.stopPropagation();
+    setDraggedQuery(query);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('application/json', JSON.stringify(query));
+    // Prevent text selection
+    const selection = window.getSelection();
+    if (selection) {
+      selection.removeAllRanges();
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent, query: {id: number, name: string, query: string, groupName: string | null, createdAt: Date, displayOrder: number}) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = 'move';
+    if (draggedQuery && draggedQuery.id !== query.id && draggedQuery.groupName === query.groupName) {
+      setDragOverQuery(query);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    const relatedTarget = e.relatedTarget as HTMLElement;
+    const currentTarget = e.currentTarget as HTMLElement;
+    if (!currentTarget.contains(relatedTarget)) {
+      setDragOverQuery(null);
+    }
+  };
+
+  const handleDrop = async (e: React.DragEvent, targetQuery: {id: number, name: string, query: string, groupName: string | null, createdAt: Date, displayOrder: number}) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOverQuery(null);
+    
+    if (!draggedQuery || draggedQuery.id === targetQuery.id) {
+      setDraggedQuery(null);
+      return;
+    }
+
+    // Only allow reordering within the same group
+    if (draggedQuery.groupName !== targetQuery.groupName) {
+      alert('Cannot move queries between different groups');
+      setDraggedQuery(null);
+      return;
+    }
+
+    // Get all queries in the same group, sorted by display order
+    const groupQueries = savedQueries
+      .filter(q => q.groupName === draggedQuery.groupName)
+      .sort((a, b) => a.displayOrder - b.displayOrder);
+    
+    const draggedIndex = groupQueries.findIndex(q => q.id === draggedQuery.id);
+    const targetIndex = groupQueries.findIndex(q => q.id === targetQuery.id);
+
+    if (draggedIndex === -1 || targetIndex === -1 || draggedIndex === targetIndex) {
+      setDraggedQuery(null);
+      return;
+    }
+
+    // Optimistically update UI
+    const reorderedQueries = [...groupQueries];
+    const [draggedItem] = reorderedQueries.splice(draggedIndex, 1);
+    reorderedQueries.splice(targetIndex, 0, draggedItem);
+
+    // Update display_order for optimistic UI
+    const updatedQueries = reorderedQueries.map((q, i) => ({ ...q, displayOrder: i }));
+    const otherQueries = savedQueries.filter(q => q.groupName !== draggedQuery.groupName);
+    setSavedQueries([...otherQueries, ...updatedQueries].sort((a, b) => {
+      if (a.groupName === null && b.groupName !== null) return 1;
+      if (a.groupName !== null && b.groupName === null) return -1;
+      if (a.groupName !== b.groupName) return (a.groupName || '').localeCompare(b.groupName || '');
+      return a.displayOrder - b.displayOrder;
+    }));
+    setDraggedQuery(null);
+
+    // Update database in background
+    try {
+      for (let i = 0; i < reorderedQueries.length; i++) {
+        const result = await updateQueryOrder(reorderedQueries[i].id, i);
+        if (!result.success) {
+          throw new Error('Failed to update query order');
+        }
+      }
+    } catch (error) {
+      // Revert on error
+      console.error('Failed to update order:', error);
+      await loadSavedQueries();
+      alert('Failed to update order. Changes have been reverted.');
+    }
+
+    await loadSavedQueries();
+    setDraggedQuery(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedQuery(null);
+    setDragOverQuery(null);
+  };
+
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, savedQuery: {id: number, name: string, query: string, groupName: string | null, createdAt: Date, displayOrder: number}) => {
+    setMenuAnchor(event.currentTarget);
+    setSelectedQueryForMenu(savedQuery);
+  };
+
+  const handleMenuClose = () => {
+    setMenuAnchor(null);
+    setSelectedQueryForMenu(null);
+  };
+
+  const handleExecuteSavedQuery = async () => {
+    if (!selectedQueryForMenu) return;
+    handleMenuClose();
+    
+    // Load query to Execute Query tab
+    setQuery(selectedQueryForMenu.query);
+    setActiveTab(0);
+    
+    // Execute it automatically
+    setTimeout(async () => {
+      setExecuting(true);
+      setQueryError('');
+      setQueryResult(null);
+
+      try {
+        const trimmedQuery = selectedQueryForMenu.query.trim().toLowerCase();
+        const isSelectQuery = trimmedQuery.startsWith('select') || 
+                             trimmedQuery.startsWith('with') || 
+                             trimmedQuery.startsWith('show') ||
+                             trimmedQuery.startsWith('explain');
+        
+        if (!isSelectQuery) {
+          if (executeSentinel !== '#mano') {
+            setQueryError('You do not have permission for this operation.');
+            setExecuting(false);
+            return;
+          }
+        }
+        
+        const result = await executeQuery(selectedQueryForMenu.query);
+        
+        if (result.success && result.data) {
+          setQueryResult(result.data);
+        } else {
+          setQueryError(result.error || 'Query execution failed');
+        }
+      } catch (err) {
+        setQueryError('An error occurred while executing the query');
+        console.error('Query execution error:', err);
+      } finally {
+        setExecuting(false);
+      }
+    }, 100);
+  };
+
+  const handleDownloadSavedQueryAsCSV = async () => {
+    if (!selectedQueryForMenu) return;
+    const queryToExecute = selectedQueryForMenu.query;
+    handleMenuClose();
+    
+    setDownloading(true);
+    setQueryError('');
+
+    try {
+      const trimmedQuery = queryToExecute.trim().toLowerCase();
+      const isSelectQuery = trimmedQuery.startsWith('select') || 
+                           trimmedQuery.startsWith('with') || 
+                           trimmedQuery.startsWith('show') ||
+                           trimmedQuery.startsWith('explain');
+      
+      if (!isSelectQuery) {
+        if (executeSentinel !== '#mano') {
+          setQueryError('You do not have permission for this operation.');
+          setDownloading(false);
+          return;
+        }
+      }
+      
+      const result = await executeQuery(queryToExecute);
+      
+      if (result.success && result.data) {
+        const columns = result.data.columns;
+        const rows = result.data.rows;
+
+        if (rows.length === 0) {
+          setQueryError('Query returned no results');
+          setDownloading(false);
+          return;
+        }
+
+        const csvHeader = columns.join(',');
+        const csvRows = rows.map((row: any) => {
+          return columns.map((col: string) => {
+            const value = row[col];
+            if (value === null || value === undefined) return '';
+            
+            const stringValue = String(value);
+            if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+              return `"${stringValue.replace(/"/g, '""')}"`;
+            }
+            return stringValue;
+          }).join(',');
+        });
+
+        const csvContent = [csvHeader, ...csvRows].join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `${selectedQueryForMenu.name.replace(/[^a-z0-9]/gi, '_')}_${new Date().getTime()}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        setQueryError(result.error || 'Query execution failed');
+      }
+    } catch (err) {
+      setQueryError('An error occurred while executing the query');
+      console.error('Query execution error:', err);
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -432,7 +886,23 @@ export default function QueryInterface() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Enter your SQL query here..."
-            sx={{ mb: 2 }}
+            sx={{ 
+              mb: 2,
+              '& .MuiOutlinedInput-root': {
+                backgroundColor: query.trim() ? getRiskColor(getQueryRiskLevel(query)) : 'transparent',
+                borderColor: query.trim() ? getRiskBorderColor(getQueryRiskLevel(query)) : undefined,
+                '& fieldset': {
+                  borderColor: query.trim() ? getRiskBorderColor(getQueryRiskLevel(query)) : undefined,
+                  borderWidth: '2px',
+                },
+                '&:hover fieldset': {
+                  borderColor: query.trim() ? getRiskBorderColor(getQueryRiskLevel(query)) : undefined,
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: query.trim() ? getRiskBorderColor(getQueryRiskLevel(query)) : undefined,
+                },
+              },
+            }}
           />
           
           <TextField
@@ -450,9 +920,19 @@ export default function QueryInterface() {
             <Button
               variant="contained"
               onClick={handleExecuteQuery}
-              disabled={executing}
+              disabled={executing || downloading}
             >
               {executing ? <CircularProgress size={24} /> : 'Execute Query'}
+            </Button>
+            
+            <Button
+              variant="contained"
+              color="success"
+              startIcon={<DownloadIcon />}
+              onClick={handleDirectDownloadCSV}
+              disabled={executing || downloading}
+            >
+              {downloading ? <CircularProgress size={24} /> : 'Download CSV'}
             </Button>
             
             <Button
@@ -476,9 +956,20 @@ export default function QueryInterface() {
 
           {queryResult && (
             <Box>
-              <Typography variant="subtitle1" gutterBottom>
-                Results ({queryResult.rowCount} rows)
-              </Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                <Typography variant="subtitle1">
+                  Results ({queryResult.rowCount} rows)
+                </Typography>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<DownloadIcon />}
+                  onClick={handleDownloadCSV}
+                  disabled={!queryResult.rows || queryResult.rows.length === 0}
+                >
+                  Download CSV
+                </Button>
+              </Box>
               <TableContainer component={Paper} variant="outlined">
                 <Table size="small">
                   <TableHead>
@@ -784,61 +1275,199 @@ export default function QueryInterface() {
                   return q.name.toLowerCase().includes(search) || 
                          q.query.toLowerCase().includes(search);
                 })
-                .map((savedQuery) => (
+                .map((savedQuery, index, array) => {
+                  const groupQueries = savedQueries.filter(q => q.groupName === selectedGroupFilter);
+                  const groupIndex = groupQueries.findIndex(q => q.id === savedQuery.id);
+                  const isFirst = groupIndex === 0;
+                  const isLast = groupIndex === groupQueries.length - 1;
+                  const isDragging = draggedQuery?.id === savedQuery.id;
+                  const isDropTarget = dragOverQuery?.id === savedQuery.id;
+                  
+                  // Calculate if we should show drop indicator above or below
+                  const showDropIndicator = isDropTarget && draggedQuery;
+                  const draggedPos = draggedQuery ? groupQueries.findIndex(q => q.id === draggedQuery.id) : -1;
+                  const targetPos = groupIndex;
+                  const isDropAbove = draggedPos > targetPos;
+                  
+                  return (
                   <ListItem
-                    key={savedQuery.id}
-                    secondaryAction={
-                      <Stack direction="row" spacing={1}>
-                        <Tooltip title="Copy query">
-                          <IconButton
-                            edge="end"
-                            onClick={async () => {
-                              try {
-                                await navigator.clipboard.writeText(savedQuery.query);
-                              } catch (err) {
-                                console.error('Failed to copy:', err);
-                              }
-                            }}
-                            size="small"
-                          >
-                            <ContentCopyIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
+                      key={savedQuery.id}
+                      onDragOver={(e) => handleDragOver(e, savedQuery)}
+                      onDragLeave={handleDragLeave}
+                      onDrop={(e) => handleDrop(e, savedQuery)}
+                      sx={{
+                        position: 'relative',
+                        opacity: isDragging ? 0.4 : 1,
+                        transform: isDragging ? 'scale(0.98)' : 'scale(1)',
+                        backgroundColor: isDropTarget ? 'primary.light' : 'transparent',
+                        borderTop: showDropIndicator && isDropAbove ? '1px solid #bdbdbd' : 'none',
+                        borderBottom: showDropIndicator && !isDropAbove ? '1px solid #bdbdbd' : 'none',
+                        borderColor: '#bdbdbd',
+                        transition: 'all 0.2s ease-in-out',
+                        '&:hover': {
+                          backgroundColor: isDragging ? 'transparent' : 'rgba(25, 118, 210, 0.12)',
+                          boxShadow: isDragging ? 'none' : '0 0 0 2px rgba(33, 150, 243, 0.18)',
+                          borderColor: isDragging ? '#bdbdbd' : '#2196f3',
+                          zIndex: 2,
+                        },
+                        p: 0,
+                        mb: 2, // more vertical space between rows
+                      }}
+                      secondaryAction={
                         <IconButton
                           edge="end"
-                          onClick={() => handleDeleteQuery(savedQuery.id)}
-                          color="error"
+                          onClick={(e) => handleMenuOpen(e, savedQuery)}
                           size="small"
                         >
-                          <DeleteIcon fontSize="small" />
+                          <MoreVertIcon />
                         </IconButton>
-                      </Stack>
-                    }
-                  >
-                    <ListItemButton onClick={() => handleLoadQuery(savedQuery)}>
-                      <ListItemText
-                        primary={savedQuery.name}
-                        secondary={
-                          <Typography
-                            component="span"
-                            variant="caption"
-                            sx={{
-                              fontFamily: 'monospace',
-                              display: 'block',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap'
-                            }}
-                          >
-                            {savedQuery.query}
-                          </Typography>
-                        }
-                      />
-                    </ListItemButton>
-                  </ListItem>
-                ))}
+                      }
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'stretch', width: '100%' }}>
+                        <Box
+                          draggable
+                          onDragStart={(e) => handleDragStart(e, savedQuery)}
+                          onDragEnd={handleDragEnd}
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            px: 1,
+                            backgroundColor: getRiskBorderColor(getQueryRiskLevel(savedQuery.query)),
+                            color: '#fff',
+                            cursor: isDragging ? 'grabbing' : 'grab',
+                            borderTopLeftRadius: 4,
+                            borderBottomLeftRadius: 4,
+                            mr: 1,
+                          }}
+                          title="Drag to reorder"
+                        >
+                          <DragIndicatorIcon fontSize="small" />
+                        </Box>
+                        <ListItemButton
+                          onClick={() => handleEditQuery(savedQuery)}
+                          sx={{
+                            background: `linear-gradient(120deg, rgba(255,255,255,0.20) 0%, rgba(255,255,255,0.05) 100%), ${getRiskColor(getQueryRiskLevel(savedQuery.query))}`,
+                            borderLeft: `1px solid ${getRiskBorderColor(getQueryRiskLevel(savedQuery.query))}`,
+                            marginLeft: '2px',
+                            boxShadow: '0 0 0 2px rgba(33,150,243,0.10)',
+                            backdropFilter: 'blur(32px) saturate(300%)',
+                            WebkitBackdropFilter: 'blur(32px) saturate(300%)',
+                            borderRadius: 2,
+                            border: '1px solid rgba(255,255,255,0.25)',
+                            pl: 1,
+                            transition: 'box-shadow 0.2s, background 0.2s',
+                            boxSizing: 'border-box',
+                            position: 'relative',
+                            overflow: 'hidden',
+                            '&:before': {
+                              content: '""',
+                              position: 'absolute',
+                              inset: 0,
+                              borderRadius: '2px',
+                              border: '1px solid rgba(255,255,255,0.18)',
+                              pointerEvents: 'none',
+                              boxShadow: 'inset 0 2.5px 8px 0 rgba(255,255,255,0.10)',
+                            },
+                            '&:after': {
+                              content: '""',
+                              position: 'absolute',
+                              left: 0,
+                              right: 0,
+                              top: 0,
+                              height: '45%',
+                              background: 'linear-gradient(180deg, rgba(255,255,255,0.30) 0%, rgba(255,255,255,0.10) 100%)',
+                              pointerEvents: 'none',
+                            },
+                            '&:hover': {
+                              background: `linear-gradient(120deg, rgba(255,255,255,0.32) 0%, rgba(255,255,255,0.10) 100%), ${getRiskColor(getQueryRiskLevel(savedQuery.query))}`,
+                              boxShadow: '0 0 0 4px rgba(33,150,243,0.18)',
+                              borderColor: '#2196f3',
+                              opacity: 1,
+                            },
+                          }}
+                        >
+                          <ListItemText
+                            primary={savedQuery.name}
+                            secondary={
+                              <Typography
+                                component="span"
+                                variant="caption"
+                                sx={{
+                                  fontFamily: 'monospace',
+                                  display: 'block',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap'
+                                }}
+                              >
+                                {savedQuery.query}
+                              </Typography>
+                            }
+                          />
+                        </ListItemButton>
+                      </Box>
+                    </ListItem>
+                      );
+                })}
             </List>
           )}
+          
+          {/* Actions Menu */}
+          <Menu
+            anchorEl={menuAnchor}
+            open={Boolean(menuAnchor)}
+            onClose={handleMenuClose}
+          >
+            <MenuItem onClick={() => {
+              if (selectedQueryForMenu) {
+                handleLoadQuery(selectedQueryForMenu);
+              }
+              handleMenuClose();
+            }}>
+              <ListItemText>Load Query</ListItemText>
+            </MenuItem>
+            <MenuItem onClick={handleExecuteSavedQuery}>
+              <PlayArrowIcon fontSize="small" sx={{ mr: 1 }} />
+              <ListItemText>Execute Query</ListItemText>
+            </MenuItem>
+            <MenuItem onClick={handleDownloadSavedQueryAsCSV}>
+              <DownloadIcon fontSize="small" sx={{ mr: 1 }} />
+              <ListItemText>Download CSV</ListItemText>
+            </MenuItem>
+            <Divider />
+            <MenuItem onClick={() => {
+              if (selectedQueryForMenu) {
+                handleEditQuery(selectedQueryForMenu);
+              }
+              handleMenuClose();
+            }}>
+              <EditIcon fontSize="small" sx={{ mr: 1 }} />
+              <ListItemText>Edit Query</ListItemText>
+            </MenuItem>
+            <MenuItem onClick={async () => {
+              if (selectedQueryForMenu) {
+                try {
+                  await navigator.clipboard.writeText(selectedQueryForMenu.query);
+                } catch (err) {
+                  console.error('Failed to copy:', err);
+                }
+              }
+              handleMenuClose();
+            }}>
+              <ContentCopyIcon fontSize="small" sx={{ mr: 1 }} />
+              <ListItemText>Copy Query</ListItemText>
+            </MenuItem>
+            <Divider />
+            <MenuItem onClick={() => {
+              if (selectedQueryForMenu) {
+                handleDeleteQuery(selectedQueryForMenu.id);
+              }
+              handleMenuClose();
+            }} sx={{ color: 'error.main' }}>
+              <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
+              <ListItemText>Delete Query</ListItemText>
+            </MenuItem>
+          </Menu>
         </Box>
       </TabPanel>
 
@@ -965,6 +1594,237 @@ export default function QueryInterface() {
           <Button onClick={handleSaveQuery} variant="contained" disabled={!queryName.trim()}>
             Save
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Edit Query Dialog */}
+      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle>Edit Query</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <TextField
+              autoFocus
+              label="Query Name"
+              fullWidth
+              value={editQueryName}
+              onChange={(e) => setEditQueryName(e.target.value)}
+              placeholder="e.g., Get all voters by district"
+            />
+            <TextField
+              label="Query"
+              fullWidth
+              multiline
+              rows={10}
+              value={editQueryText}
+              onChange={(e) => setEditQueryText(e.target.value)}
+              placeholder="Enter your SQL query here..."
+              sx={{ 
+                fontFamily: 'monospace',
+                '& .MuiOutlinedInput-root': {
+                  backgroundColor: editQueryText.trim() ? getRiskColor(getQueryRiskLevel(editQueryText)) : 'transparent',
+                  borderColor: editQueryText.trim() ? getRiskBorderColor(getQueryRiskLevel(editQueryText)) : undefined,
+                  '& fieldset': {
+                    borderColor: editQueryText.trim() ? getRiskBorderColor(getQueryRiskLevel(editQueryText)) : undefined,
+                    borderWidth: '2px',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: editQueryText.trim() ? getRiskBorderColor(getQueryRiskLevel(editQueryText)) : undefined,
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: editQueryText.trim() ? getRiskBorderColor(getQueryRiskLevel(editQueryText)) : undefined,
+                  },
+                },
+              }}
+            />
+            <Autocomplete
+              freeSolo
+              options={availableGroups}
+              value={editQueryGroup}
+              onChange={(event, newValue) => setEditQueryGroup(newValue || '')}
+              onInputChange={(event, newValue) => setEditQueryGroup(newValue)}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Group (Optional)"
+                  placeholder="e.g., Reports, Analytics"
+                />
+              )}
+            />
+            <TextField
+              label="Display Order"
+              type="number"
+              fullWidth
+              value={editQueryOrder}
+              onChange={(e) => setEditQueryOrder(parseInt(e.target.value) || 0)}
+              helperText="Lower numbers appear first within the group"
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', px: 1 }}>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Button
+                startIcon={<PlayArrowIcon />}
+                onClick={async () => {
+                  if (!editingQuery) return;
+                  setEditDialogOpen(false);
+                  
+                  // Load query to Execute Query tab
+                  setQuery(editQueryText);
+                  setActiveTab(0);
+                  
+                  // Execute it automatically
+                  setTimeout(async () => {
+                    setExecuting(true);
+                    setQueryError('');
+                    setQueryResult(null);
+
+                    try {
+                      const trimmedQuery = editQueryText.trim().toLowerCase();
+                      const isSelectQuery = trimmedQuery.startsWith('select') || 
+                                           trimmedQuery.startsWith('with') || 
+                                           trimmedQuery.startsWith('show') ||
+                                           trimmedQuery.startsWith('explain');
+                      
+                      if (!isSelectQuery) {
+                        if (executeSentinel !== '#mano') {
+                          setQueryError('You do not have permission for this operation.');
+                          setExecuting(false);
+                          return;
+                        }
+                      }
+                      
+                      const result = await executeQuery(editQueryText);
+                      
+                      if (result.success && result.data) {
+                        setQueryResult(result.data);
+                      } else {
+                        setQueryError(result.error || 'Query execution failed');
+                      }
+                    } catch (err) {
+                      setQueryError('An error occurred while executing the query');
+                      console.error('Query execution error:', err);
+                    } finally {
+                      setExecuting(false);
+                    }
+                  }, 100);
+                }}
+                size="small"
+                disabled={!editQueryText.trim()}
+              >
+                Execute
+              </Button>
+              <Button
+                startIcon={<DownloadIcon />}
+                onClick={async () => {
+                  if (!editingQuery) return;
+                  setEditDialogOpen(false);
+                  
+                  setDownloading(true);
+                  setQueryError('');
+
+                  try {
+                    const trimmedQuery = editQueryText.trim().toLowerCase();
+                    const isSelectQuery = trimmedQuery.startsWith('select') || 
+                                         trimmedQuery.startsWith('with') || 
+                                         trimmedQuery.startsWith('show') ||
+                                         trimmedQuery.startsWith('explain');
+                    
+                    if (!isSelectQuery) {
+                      if (executeSentinel !== '#mano') {
+                        setQueryError('You do not have permission for this operation.');
+                        setDownloading(false);
+                        return;
+                      }
+                    }
+                    
+                    const result = await executeQuery(editQueryText);
+                    
+                    if (result.success && result.data) {
+                      const columns = result.data.columns;
+                      const rows = result.data.rows;
+
+                      if (rows.length === 0) {
+                        setQueryError('Query returned no results');
+                        setDownloading(false);
+                        return;
+                      }
+
+                      const csvHeader = columns.join(',');
+                      const csvRows = rows.map((row: any) => {
+                        return columns.map((col: string) => {
+                          const value = row[col];
+                          if (value === null || value === undefined) return '';
+                          
+                          const stringValue = String(value);
+                          if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\\n')) {
+                            return `"${stringValue.replace(/"/g, '""')}"`;
+                          }
+                          return stringValue;
+                        }).join(',');
+                      });
+
+                      const csvContent = [csvHeader, ...csvRows].join('\\n');
+                      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                      const link = document.createElement('a');
+                      const url = URL.createObjectURL(blob);
+                      link.setAttribute('href', url);
+                      link.setAttribute('download', `${editQueryName.replace(/[^a-z0-9]/gi, '_')}_${new Date().getTime()}.csv`);
+                      link.style.visibility = 'hidden';
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                    } else {
+                      setQueryError(result.error || 'Query execution failed');
+                    }
+                  } catch (err) {
+                    setQueryError('An error occurred while executing the query');
+                    console.error('Query execution error:', err);
+                  } finally {
+                    setDownloading(false);
+                  }
+                }}
+                size="small"
+                disabled={!editQueryText.trim()}
+              >
+                Download CSV
+              </Button>
+              <Button
+                startIcon={<ContentCopyIcon />}
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(editQueryText);
+                  } catch (err) {
+                    console.error('Failed to copy:', err);
+                  }
+                }}
+                size="small"
+                disabled={!editQueryText.trim()}
+              >
+                Copy
+              </Button>
+              <Button
+                startIcon={<DeleteIcon />}
+                onClick={async () => {
+                  if (!editingQuery) return;
+                  if (window.confirm(`Are you sure you want to delete "${editQueryName}"?`)) {
+                    await handleDeleteQuery(editingQuery.id);
+                    setEditDialogOpen(false);
+                  }
+                }}
+                size="small"
+                color="error"
+              >
+                Delete
+              </Button>
+            </Box>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
+              <Button onClick={handleUpdateQuery} variant="contained" disabled={!editQueryName.trim() || !editQueryText.trim()}>
+                Update
+              </Button>
+            </Box>
+          </Box>
         </DialogActions>
       </Dialog>
     </Paper>

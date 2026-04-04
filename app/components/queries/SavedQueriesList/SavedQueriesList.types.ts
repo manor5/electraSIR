@@ -1,0 +1,1 @@
+// Types for SavedQueriesList (stub)

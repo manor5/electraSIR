@@ -1,0 +1,1 @@
+// Hooks for QueryEditor (stub)

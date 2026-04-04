@@ -1,0 +1,1 @@
+// Styles for QueryTabs (stub)

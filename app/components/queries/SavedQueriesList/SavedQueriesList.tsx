@@ -1,3 +1,5 @@
+'use client';
+
 import { getSavedQueries, getQueryGroups } from '@/app/actions/queryActions';
 
 import { useState, useEffect } from 'react';

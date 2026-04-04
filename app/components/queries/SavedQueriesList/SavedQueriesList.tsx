@@ -188,6 +188,8 @@ export default function SavedQueriesList() {
                 const isLast = groupIndex === groupQueries.length - 1;
                 const isDragging = draggedQuery?.id === savedQuery.id;
                 const isDropTarget = dragOverQuery?.id === savedQuery.id;
+                const showDropIndicator = isDropTarget;
+                const isDropAbove = false; // Drop position indicator (can be enhanced with mouse position logic)
                 // ...existing code...
                 return (
                   <ListItem

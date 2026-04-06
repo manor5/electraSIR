@@ -73,6 +73,9 @@ export default function Elections2026Page() {
   const [boothsLoading, setBoothsLoading] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState('');
+  
+  const [sortBy, setSortBy] = useState<keyof GenderAggregatedData | null>(null);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   // Initialize filters on mount
   useEffect(() => {
@@ -211,6 +214,39 @@ export default function Elections2026Page() {
     if (allWard) setSelectedWard(allWard);
     if (allBooth) setSelectedBooth(allBooth);
     setPage(1);
+  };
+
+  const getSortedData = () => {
+    if (!sortBy) return genderData;
+    
+    const sorted = [...genderData].sort((a, b) => {
+      const aVal = a[sortBy];
+      const bVal = b[sortBy];
+      
+      if (aVal === null || aVal === undefined) return 1;
+      if (bVal === null || bVal === undefined) return -1;
+      
+      if (typeof aVal === 'string' && typeof bVal === 'string') {
+        return sortOrder === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+      }
+      
+      if (typeof aVal === 'number' && typeof bVal === 'number') {
+        return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
+      }
+      
+      return 0;
+    });
+    
+    return sorted;
+  };
+
+  const handleSort = (column: keyof GenderAggregatedData) => {
+    if (sortBy === column) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(column);
+      setSortOrder('asc');
+    }
   };
 
   const handleDownload = async () => {
@@ -415,40 +451,40 @@ export default function Elections2026Page() {
                         <TableCell sx={{ fontWeight: 700, background: '#f8fafc', width: '50px', py: 1, px: 0.5 }}>
                           S. No
                         </TableCell>
-                        <TableCell sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '100px' }}>
-                          Paguthi
+                        <TableCell sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '100px', cursor: 'pointer', '&:hover': { background: '#e0e8f0' } }} onClick={() => handleSort('pagudhi')}>
+                          Paguthi {sortBy === 'pagudhi' && (sortOrder === 'asc' ? '↑' : '↓')}
                         </TableCell>
-                        <TableCell sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '45px' }}>
-                          Ward
+                        <TableCell sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '45px', cursor: 'pointer', '&:hover': { background: '#e0e8f0' } }} onClick={() => handleSort('ward')}>
+                          Ward {sortBy === 'ward' && (sortOrder === 'asc' ? '↑' : '↓')}
                         </TableCell>
-                        <TableCell sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '45px' }}>
-                          Booth
+                        <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '45px', cursor: 'pointer', '&:hover': { background: '#e0e8f0' } }} onClick={() => handleSort('booth')}>
+                          Booth {sortBy === 'booth' && (sortOrder === 'asc' ? '↑' : '↓')}
                         </TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '80px' }}>
-                          Male (Count)
+                        <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '80px', cursor: 'pointer', '&:hover': { background: '#e0e8f0' } }} onClick={() => handleSort('male_count')}>
+                          Male (Count) {sortBy === 'male_count' && (sortOrder === 'asc' ? '↑' : '↓')}
                         </TableCell>
                         <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '70px' }}>
                           Male (%)
                         </TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '80px' }}>
-                          Female (Count)
+                        <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '80px', cursor: 'pointer', '&:hover': { background: '#e0e8f0' } }} onClick={() => handleSort('female_count')}>
+                          Female (Count) {sortBy === 'female_count' && (sortOrder === 'asc' ? '↑' : '↓')}
                         </TableCell>
                         <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '70px' }}>
                           Female (%)
                         </TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '80px' }}>
-                          Third (Count)
+                        <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '80px', cursor: 'pointer', '&:hover': { background: '#e0e8f0' } }} onClick={() => handleSort('third_count')}>
+                          Third (Count) {sortBy === 'third_count' && (sortOrder === 'asc' ? '↑' : '↓')}
                         </TableCell>
                         <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '70px' }}>
                           Third (%)
                         </TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '70px' }}>
-                          Total
+                        <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '70px', cursor: 'pointer', '&:hover': { background: '#e0e8f0' } }} onClick={() => handleSort('total_count')}>
+                          Total {sortBy === 'total_count' && (sortOrder === 'asc' ? '↑' : '↓')}
                         </TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {genderData.map((row, index) => {
+                      {getSortedData().map((row, index) => {
                         const malePercent = row.total_count > 0 ? ((row.male_count / row.total_count) * 100).toFixed(2) : '0.00';
                         const femalePercent = row.total_count > 0 ? ((row.female_count / row.total_count) * 100).toFixed(2) : '0.00';
                         const thirdPercent = row.total_count > 0 ? ((row.third_count / row.total_count) * 100).toFixed(2) : '0.00';
@@ -464,7 +500,7 @@ export default function Elections2026Page() {
                             <TableCell align="center" sx={{ fontWeight: 600, width: '50px', py: 0.5, px: 0.5 }}>{index + 1}</TableCell>
                             <TableCell sx={{ py: 0.5, px: 0.5, width: '100px' }}>{row.pagudhi || 'N/A'}</TableCell>
                             <TableCell sx={{ py: 0.5, px: 0.5, width: '45px' }}>{row.ward || 'N/A'}</TableCell>
-                            <TableCell sx={{ py: 0.5, px: 0.5, width: '45px' }}>{row.booth || 'N/A'}</TableCell>
+                            <TableCell align="right" sx={{ py: 0.5, px: 0.5, width: '45px' }}>{row.booth || 'N/A'}</TableCell>
                             <TableCell align="right" sx={{ py: 0.5, px: 0.5, width: '80px' }}>{row.male_count}</TableCell>
                             <TableCell align="right" sx={{ py: 0.5, px: 0.5, width: '70px' }}>{malePercent}%</TableCell>
                             <TableCell align="right" sx={{ py: 0.5, px: 0.5, width: '80px' }}>{row.female_count}</TableCell>

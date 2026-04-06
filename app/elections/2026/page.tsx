@@ -31,6 +31,13 @@ import {
   getAllBooths,
   getGenderWiseAggregatedData,
 } from '@/app/actions/elections2026Actions';
+// Remove direct import of server action
+interface AgeBandAggregatedData {
+  age_band: string;
+  male_count: number;
+  female_count: number;
+  total_count: number;
+}
 
 interface Booth {
   booth: string;
@@ -59,6 +66,9 @@ export default function Elections2026Page() {
   const [wards, setWards] = useState<Ward[]>([]);
   const [paguthis, setPaguthis] = useState<Paguthi[]>([]);
   const [genderData, setGenderData] = useState<GenderAggregatedData[]>([]);
+
+  const [ageBandData, setAgeBandData] = useState<AgeBandAggregatedData[]>([]);
+  const [ageBandLoading, setAgeBandLoading] = useState(false);
 
   const [selectedBooth, setSelectedBooth] = useState<Booth | null>(null);
   const [selectedWard, setSelectedWard] = useState<Ward | null>(null);
@@ -175,8 +185,32 @@ export default function Elections2026Page() {
   useEffect(() => {
     if (selectedBooth && selectedWard && selectedPaguthi) {
       loadGenderData();
+      loadAgeBandData();
     }
   }, [selectedBooth, selectedWard, selectedPaguthi]);
+  const loadAgeBandData = async () => {
+    setAgeBandLoading(true);
+    try {
+      const booth = selectedBooth?.booth;
+      const ward = selectedWard?.ward;
+      const pagudhi = selectedPaguthi?.pagudhi;
+      // Call the server action via fetch to an API route
+      const params = new URLSearchParams();
+      if (booth) params.append('booth', booth);
+      if (ward) params.append('ward', ward);
+      if (pagudhi) params.append('pagudhi', pagudhi);
+      const res = await fetch(`/api/age-band?${params.toString()}`);
+      const result = await res.json();
+      if (result.success) {
+        setAgeBandData(result.data);
+      } else {
+        setAgeBandData([]);
+      }
+    } catch (e) {
+      setAgeBandData([]);
+    }
+    setAgeBandLoading(false);
+  };
 
   const loadGenderData = async () => {
     setLoading(true);
@@ -293,6 +327,32 @@ export default function Elections2026Page() {
         row.total_count,
       ];
     });
+
+    // Calculate summary row
+    if (data.length > 0) {
+      const totalMale = data.reduce((sum, row) => sum + row.male_count, 0);
+      const totalFemale = data.reduce((sum, row) => sum + row.female_count, 0);
+      const totalThird = data.reduce((sum, row) => sum + row.third_count, 0);
+      const grandTotal = data.reduce((sum, row) => sum + row.total_count, 0);
+
+      const malePercentOverall = grandTotal > 0 ? ((totalMale / grandTotal) * 100).toFixed(2) : '0.00';
+      const femalePercentOverall = grandTotal > 0 ? ((totalFemale / grandTotal) * 100).toFixed(2) : '0.00';
+      const thirdPercentOverall = grandTotal > 0 ? ((totalThird / grandTotal) * 100).toFixed(2) : '0.00';
+
+      const summaryRow = [
+        'TOTAL',
+        '',
+        '',
+        totalMale,
+        malePercentOverall,
+        totalFemale,
+        femalePercentOverall,
+        totalThird,
+        thirdPercentOverall,
+        grandTotal,
+      ];
+      rows.push(summaryRow);
+    }
 
     return [headers, ...rows].map((row) => row.map((cell) => `"${cell}"`).join(',')).join('\n');
   };
@@ -562,9 +622,84 @@ export default function Elections2026Page() {
         </Card>
 
         {/* Note for future tables */}
-        <Alert severity="info">
-          More tables will be added below. This page is currently showing Elector Records from the electors_2026 table.
-        </Alert>
+        {/* Age Band Table */}
+        <Box sx={{ mt: 6 }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+            {(() => {
+              if (
+                selectedBooth?.booth && selectedBooth.booth !== 'All'
+              ) {
+                return `Age Band Distribution for Booth ${selectedBooth.booth}`;
+              } else if (
+                selectedWard?.ward && selectedWard.ward !== 'All'
+              ) {
+                return `Age Band Distribution for Ward ${selectedWard.ward}`;
+              } else if (
+                selectedPaguthi?.pagudhi && selectedPaguthi.pagudhi !== 'All'
+              ) {
+                return `Age Band Distribution for Paguthi ${selectedPaguthi.pagudhi}`;
+              } else {
+                return 'Age Band Distribution for All Data';
+              }
+            })()}
+          </Typography>
+          <Card sx={{ borderRadius: 4, boxShadow: '0 4px 24px rgba(0, 0, 0, 0.06)' }}>
+            <CardContent sx={{ p: 0 }}>
+              {ageBandLoading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+                  <CircularProgress />
+                </Box>
+              ) : (
+                <TableContainer sx={{ maxHeight: '400px', overflowY: 'auto', overflowX: 'auto' }}>
+                  <Table size="small" stickyHeader sx={{ minWidth: '600px' }}>
+                    <TableHead>
+                      <TableRow sx={{ background: '#f8fafc' }}>
+                        <TableCell sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5 }}>Age Band</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5 }}>Male (Count)</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5 }}>Female (Count)</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5 }}>Total</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5 }}>Percentage</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {(() => {
+                        // Calculate grand total once for all rows
+                        const grandTotal = ageBandData.reduce((sum, r) => sum + Number(r.total_count), 0);
+                        return ageBandData.map((row, idx) => {
+                          const percent = grandTotal > 0 ? ((Number(row.total_count) / grandTotal) * 100).toFixed(2) : '0.00';
+                          return (
+                            <TableRow key={row.age_band}>
+                              <TableCell>{row.age_band}</TableCell>
+                              <TableCell align="right">{row.male_count}</TableCell>
+                              <TableCell align="right">{row.female_count}</TableCell>
+                              <TableCell align="right">{row.total_count}</TableCell>
+                              <TableCell align="right">{percent}%</TableCell>
+                            </TableRow>
+                          );
+                        });
+                      })()}
+                      {/* Summary Row */}
+                      {ageBandData.length > 0 && (() => {
+                        const totalMale = ageBandData.reduce((sum, row) => sum + Number(row.male_count), 0);
+                        const totalFemale = ageBandData.reduce((sum, row) => sum + Number(row.female_count), 0);
+                        const grandTotal = ageBandData.reduce((sum, row) => sum + Number(row.total_count), 0);
+                        return (
+                          <TableRow sx={{ background: '#e8f0f7', fontWeight: 700, position: 'sticky', bottom: 0, zIndex: 10 }}>
+                            <TableCell sx={{ fontWeight: 700 }}>TOTAL</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 700 }}>{totalMale}</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 700 }}>{totalFemale}</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 700 }}>{grandTotal}</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 700 }}>100%</TableCell>
+                          </TableRow>
+                        );
+                      })()}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
+            </CardContent>
+          </Card>
+        </Box>
       </Box>
     </Box>
   );

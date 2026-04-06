@@ -62,7 +62,7 @@ export default function RootLayout({
                     WebkitTextFillColor: 'transparent',
                   }}
                 >
-                  Electra
+                  Felectra
                 </Typography>
                 <Box
                   sx={{
@@ -79,7 +79,7 @@ export default function RootLayout({
                     color: 'white',
                   }}
                 >
-                  SIR PORTAL
+                  
                 </Typography>
               </Box>
             </Toolbar>

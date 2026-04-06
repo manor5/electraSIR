@@ -72,32 +72,32 @@ export default function Home() {
           >
             A comprehensive platform for managing, searching, and analyzing electoral records with advanced mapping capabilities
           </Typography>
-          <Button
-            component={Link}
-            href="/dashboard"
-            variant="contained"
-            size="large"
-            sx={{
-              px: 6,
-              py: 2,
-              fontSize: '1.1rem',
-              fontWeight: 600,
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              color: 'white',
-              borderRadius: '50px',
-              textTransform: 'none',
-              boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
-              border: 'none',
-              '&:hover': {
-                background: 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)',
-                transform: 'translateY(-2px)',
-                boxShadow: '0 8px 20px rgba(102, 126, 234, 0.4)',
-              },
-              transition: 'all 0.3s ease',
-            }}
-          >
-            Go to Dashboard
-          </Button>
+          <Link href="/dashboard" style={{ textDecoration: 'none' }}>
+            <Button
+              variant="contained"
+              size="large"
+              sx={{
+                px: 6,
+                py: 2,
+                fontSize: '1.1rem',
+                fontWeight: 600,
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: 'white',
+                borderRadius: '50px',
+                textTransform: 'none',
+                boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
+                border: 'none',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)',
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 8px 20px rgba(102, 126, 234, 0.4)',
+                },
+                transition: 'all 0.3s ease',
+              }}
+            >
+              Go to Dashboard
+            </Button>
+          </Link>
         </Box>
 
         {/* Features Grid */}

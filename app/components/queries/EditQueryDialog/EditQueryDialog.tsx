@@ -1,6 +1,7 @@
 
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Stack, TextField, Autocomplete, Box } from '@mui/material';
 import React from 'react';
+import { executeQuery } from '@/app/actions/queryActions';
 
 interface EditQueryDialogProps {
   open: boolean;

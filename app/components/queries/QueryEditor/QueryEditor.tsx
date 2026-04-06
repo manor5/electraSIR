@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+import { executeQuery } from '@/app/actions/queryActions';
 import {
   Box,
   TextField,
@@ -82,7 +83,6 @@ export default function QueryEditor() {
           return;
         }
       }
-      // @ts-ignore: executeQuery is globally available or imported elsewhere
       const result = await executeQuery(query);
       if (result.success && result.data) {
         setQueryResult(result.data);
@@ -146,7 +146,6 @@ export default function QueryEditor() {
           return;
         }
       }
-      // @ts-ignore: executeQuery is globally available or imported elsewhere
       const result = await executeQuery(query);
       if (result.success && result.data) {
         const columns = result.data.columns;

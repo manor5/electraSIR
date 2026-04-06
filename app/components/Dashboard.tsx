@@ -16,6 +16,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import DescriptionIcon from '@mui/icons-material/Description';
 import StorageIcon from '@mui/icons-material/Storage';
 import BarChartIcon from '@mui/icons-material/BarChart';
+import EventIcon from '@mui/icons-material/Event';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -64,6 +65,14 @@ export default function Dashboard() {
       color: '#9c27b0',
       gradient: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
     },
+    {
+      title: '2026 Elections',
+      description: 'Manage and track 2026 election data and voter information',
+      path: '/elections/2026',
+      icon: 'EventIcon',
+      color: '#d32f2f',
+      gradient: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)',
+    },
   ];
 
   const handleCardClick = (path: string) => {
@@ -83,31 +92,31 @@ export default function Dashboard() {
       <Box sx={{ maxWidth: '1400px', mx: 'auto', px: 4, position: 'relative', zIndex: 1, width: '100%' }}>
         {/* Home Navigation Button */}
         <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Button
-            component={Link}
-            href="/"
-            variant="outlined"
-            startIcon={<span style={{ fontSize: '1.1rem' }}>←</span>}
-            sx={{
-              px: 3,
-              py: 1,
-              fontSize: '0.9rem',
-              fontWeight: 500,
-              color: '#667eea',
-              borderColor: '#e2e8f0',
-              borderRadius: '50px',
-              textTransform: 'none',
-              background: 'white',
-              '&:hover': {
-                borderColor: '#667eea',
-                background: '#f8f9ff',
-                transform: 'translateX(-2px)',
-              },
-              transition: 'all 0.3s ease',
-            }}
-          >
-            Back to Home
-          </Button>
+          <Link href="/" style={{ textDecoration: 'none' }}>
+            <Button
+              variant="outlined"
+              startIcon={<span style={{ fontSize: '1.1rem' }}>←</span>}
+              sx={{
+                px: 3,
+                py: 1,
+                fontSize: '0.9rem',
+                fontWeight: 500,
+                color: '#667eea',
+                borderColor: '#e2e8f0',
+                borderRadius: '50px',
+                textTransform: 'none',
+                background: 'white',
+                '&:hover': {
+                  borderColor: '#667eea',
+                  background: '#f8f9ff',
+                  transform: 'translateX(-2px)',
+                },
+                transition: 'all 0.3s ease',
+              }}
+            >
+              Back to Home
+            </Button>
+          </Link>
         </Box>
 
         <Box sx={{ mb: 8, textAlign: 'center' }}>
@@ -199,6 +208,7 @@ export default function Dashboard() {
                   {route.icon === 'DescriptionIcon' && <DescriptionIcon sx={{ fontSize: 80 }} />}
                   {route.icon === 'StorageIcon' && <StorageIcon sx={{ fontSize: 80 }} />}
                   {route.icon === 'BarChartIcon' && <BarChartIcon sx={{ fontSize: 80 }} />}
+                  {route.icon === 'EventIcon' && <EventIcon sx={{ fontSize: 80 }} />}
                 </Box>
                 <CardContent sx={{ flexGrow: 1, p: 3 }}>
                   <Typography

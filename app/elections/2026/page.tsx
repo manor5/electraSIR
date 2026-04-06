@@ -81,25 +81,25 @@ export default function Elections2026Page() {
       const result = await getPaguthis();
       console.log('getPaguthis result:', result);
       if (result.success) {
-        setPaguthis(result.data);
+        setPaguthis(result.data as Paguthi[]);
         // Auto-select 'All' paguthi by default
-        const allPaguthi = result.data.find(p => p.pagudhi === 'All');
+        const allPaguthi = result.data?.find(p => p.pagudhi === 'All');
         if (allPaguthi) {
           setSelectedPaguthi(allPaguthi);
           
           // Load wards immediately
           const wardsResult = await getWardsByPaguthi(allPaguthi.pagudhi);
           if (wardsResult.success) {
-            setWards(wardsResult.data);
-            const allWard = wardsResult.data.find(w => w.ward === 'All');
+            setWards(wardsResult.data as Ward[]);
+            const allWard = wardsResult.data?.find(w => w.ward === 'All');
             if (allWard) {
               setSelectedWard(allWard);
               
               // Load booths immediately
               const boothsResult = await getBoothsByWard(allWard.ward, allPaguthi.pagudhi);
               if (boothsResult.success) {
-                setBooths(boothsResult.data);
-                const allBooth = boothsResult.data.find(b => b.booth === 'All');
+                  setBooths(boothsResult.data as Booth[]);
+                  const allBooth = boothsResult.data?.find(b => b.booth === 'All');
                 if (allBooth) {
                   setSelectedBooth(allBooth);
                   
@@ -111,7 +111,7 @@ export default function Elections2026Page() {
                     allPaguthi.pagudhi
                   );
                   if (electorResult.success) {
-                    setGenderData(electorResult.data);
+                    setGenderData(electorResult.data as GenderAggregatedData[]);
                   } else {
                     setError(electorResult.error || 'Failed to load data');
                   }
@@ -140,9 +140,9 @@ export default function Elections2026Page() {
   const loadWards = async (pagudhi: string) => {
     const result = await getWardsByPaguthi(pagudhi);
     if (result.success) {
-      setWards(result.data);
+      setWards(result.data as Ward[]);
       // Auto-select 'All' ward by default
-      const allWard = result.data.find(w => w.ward === 'All');
+      const allWard = result.data?.find(w => w.ward === 'All');
       if (allWard) {
         setSelectedWard(allWard);
       }
@@ -159,9 +159,9 @@ export default function Elections2026Page() {
   const loadBooths = async (ward: string, pagudhi: string) => {
     const result = await getBoothsByWard(ward, pagudhi);
     if (result.success) {
-      setBooths(result.data);
+      setBooths(result.data as Booth[]);
       // Auto-select 'All' booth by default
-      const allBooth = result.data.find(b => b.booth === 'All');
+      const allBooth = result.data?.find(b => b.booth === 'All');
       if (allBooth) {
         setSelectedBooth(allBooth);
       }
@@ -185,9 +185,9 @@ export default function Elections2026Page() {
     );
     if (result.success) {
       console.log('Gender data loaded:', result.data);
-      console.log('Data sample:', result.data[0]);
+      console.log('Data sample:', result.data?.[0]);
       // Convert string counts to numbers
-      const convertedData = result.data.map((row: any) => ({
+      const convertedData = (result.data as GenderAggregatedData[])?.map((row: any) => ({
         ...row,
         male_count: Number(row.male_count),
         female_count: Number(row.female_count),

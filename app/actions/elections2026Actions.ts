@@ -346,3 +346,47 @@ export async function getGenderWiseAggregatedData(
     return { success: false, error: 'Failed to fetch aggregated data' };
   }
 }
+
+export async function getStreetWiseElectors(booth?: string, ward?: string, pagudhi?: string) {
+  try {
+    let query = `
+      SELECT 
+        swe.id,
+        swe.booth,
+        swe.ward,
+        swe.pagudhi,
+        swe.section_name,
+        swe.total_electors
+      FROM street_wise_electors swe
+      WHERE 1=1
+    `;
+    const params: (string | number)[] = [];
+    let paramCount = 1;
+    
+    if (booth && booth !== 'All') {
+      query += ` AND swe.booth = $${paramCount}`;
+      params.push(booth);
+      paramCount++;
+    }
+    
+    if (ward && ward !== 'All') {
+      query += ` AND swe.ward = $${paramCount}`;
+      params.push(ward);
+      paramCount++;
+    }
+    
+    if (pagudhi && pagudhi !== 'All') {
+      query += ` AND swe.pagudhi = $${paramCount}`;
+      params.push(pagudhi);
+      paramCount++;
+    }
+    
+    query += ` ORDER BY swe.pagudhi, swe.ward, swe.booth, swe.section_name`;
+    
+    const result = await pool.query(query, params);
+    return { success: true, data: result.rows };
+  } catch (error) {
+    console.error('Error fetching street-wise electors:', error);
+    return { success: false, error: 'Failed to fetch street-wise electors' };
+  }
+}

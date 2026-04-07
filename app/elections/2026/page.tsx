@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
   Box,
   Card,
@@ -22,7 +22,9 @@ import {
   Alert,
 } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
+import ImageIcon from '@mui/icons-material/Image';
 import ClearIcon from '@mui/icons-material/Clear';
+import * as htmlToImage from 'html-to-image';
 import {
   getPaguthis,
   getWardsByPaguthi,
@@ -86,6 +88,11 @@ export default function Elections2026Page() {
   
   const [sortBy, setSortBy] = useState<keyof GenderAggregatedData | null>(null);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+
+  // State for age band table sorting
+  type AgeBandSortKey = 'age_band' | 'male_count' | 'female_count' | 'total_count' | 'percentage';
+  const [ageBandSortBy, setAgeBandSortBy] = useState<AgeBandSortKey>('age_band');
+  const [ageBandSortOrder, setAgeBandSortOrder] = useState<'asc' | 'desc'>('asc');
 
   // Initialize filters on mount
   useEffect(() => {
@@ -280,6 +287,48 @@ export default function Elections2026Page() {
     } else {
       setSortBy(column);
       setSortOrder('asc');
+    }
+  };
+
+  // Age band sorting functions
+  const getSortedAgeBandData = () => {
+    const withPercent = ageBandData.map(row => ({
+      ...row,
+      percentage: (() => {
+        const grandTotal = ageBandData.reduce((sum, r) => sum + Number(r.total_count), 0);
+        return grandTotal > 0 ? (Number(row.total_count) / grandTotal) * 100 : 0;
+      })(),
+    }));
+    
+    if (!ageBandSortBy) return withPercent;
+    
+    return [...withPercent].sort((a, b) => {
+      let aVal: string | number = a[ageBandSortBy];
+      let bVal: string | number = b[ageBandSortBy];
+      
+      if (ageBandSortBy === 'percentage') {
+        aVal = a.percentage;
+        bVal = b.percentage;
+      }
+      
+      if (typeof aVal === 'string' && typeof bVal === 'string') {
+        return ageBandSortOrder === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+      }
+      
+      if (typeof aVal === 'number' && typeof bVal === 'number') {
+        return ageBandSortOrder === 'asc' ? aVal - bVal : bVal - aVal;
+      }
+      
+      return 0;
+    });
+  };
+
+  const handleAgeBandSort = (column: AgeBandSortKey) => {
+    if (ageBandSortBy === column) {
+      setAgeBandSortOrder(ageBandSortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setAgeBandSortBy(column);
+      setAgeBandSortOrder('asc');
     }
   };
 
@@ -512,34 +561,34 @@ export default function Elections2026Page() {
                           S. No
                         </TableCell>
                         <TableCell sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '100px', cursor: 'pointer', '&:hover': { background: '#e0e8f0' } }} onClick={() => handleSort('pagudhi')}>
-                          Paguthi {sortBy === 'pagudhi' && (sortOrder === 'asc' ? '↑' : '↓')}
+                          {sortBy === 'pagudhi' ? `Paguthi ${sortOrder === 'asc' ? '↑' : '↓'}` : 'Paguthi'}
                         </TableCell>
                         <TableCell sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '45px', cursor: 'pointer', '&:hover': { background: '#e0e8f0' } }} onClick={() => handleSort('ward')}>
-                          Ward {sortBy === 'ward' && (sortOrder === 'asc' ? '↑' : '↓')}
+                          {sortBy === 'ward' ? `Ward ${sortOrder === 'asc' ? '↑' : '↓'}` : 'Ward'}
                         </TableCell>
                         <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '45px', cursor: 'pointer', '&:hover': { background: '#e0e8f0' } }} onClick={() => handleSort('booth')}>
-                          Booth {sortBy === 'booth' && (sortOrder === 'asc' ? '↑' : '↓')}
+                          {sortBy === 'booth' ? `Booth ${sortOrder === 'asc' ? '↑' : '↓'}` : 'Booth'}
                         </TableCell>
                         <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '80px', cursor: 'pointer', '&:hover': { background: '#e0e8f0' } }} onClick={() => handleSort('male_count')}>
-                          Male (Count) {sortBy === 'male_count' && (sortOrder === 'asc' ? '↑' : '↓')}
+                          {sortBy === 'male_count' ? `Male (Count) ${sortOrder === 'asc' ? '↑' : '↓'}` : 'Male (Count)'}
                         </TableCell>
                         <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '70px' }}>
                           Male (%)
                         </TableCell>
                         <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '80px', cursor: 'pointer', '&:hover': { background: '#e0e8f0' } }} onClick={() => handleSort('female_count')}>
-                          Female (Count) {sortBy === 'female_count' && (sortOrder === 'asc' ? '↑' : '↓')}
+                          {sortBy === 'female_count' ? `Female (Count) ${sortOrder === 'asc' ? '↑' : '↓'}` : 'Female (Count)'}
                         </TableCell>
                         <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '70px' }}>
                           Female (%)
                         </TableCell>
                         <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '80px', cursor: 'pointer', '&:hover': { background: '#e0e8f0' } }} onClick={() => handleSort('third_count')}>
-                          Third (Count) {sortBy === 'third_count' && (sortOrder === 'asc' ? '↑' : '↓')}
+                          {sortBy === 'third_count' ? `Third (Count) ${sortOrder === 'asc' ? '↑' : '↓'}` : 'Third (Count)'}
                         </TableCell>
                         <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '70px' }}>
                           Third (%)
                         </TableCell>
                         <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '70px', cursor: 'pointer', '&:hover': { background: '#e0e8f0' } }} onClick={() => handleSort('total_count')}>
-                          Total {sortBy === 'total_count' && (sortOrder === 'asc' ? '↑' : '↓')}
+                          {sortBy === 'total_count' ? `Total ${sortOrder === 'asc' ? '↑' : '↓'}` : 'Total'}
                         </TableCell>
                       </TableRow>
                     </TableHead>
@@ -623,28 +672,50 @@ export default function Elections2026Page() {
 
         {/* Note for future tables */}
         {/* Age Band Table */}
-        <Box sx={{ mt: 6 }}>
-          <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-            {(() => {
-              if (
-                selectedBooth?.booth && selectedBooth.booth !== 'All'
-              ) {
-                return `Age Band Distribution for Booth ${selectedBooth.booth}`;
-              } else if (
-                selectedWard?.ward && selectedWard.ward !== 'All'
-              ) {
-                return `Age Band Distribution for Ward ${selectedWard.ward}`;
-              } else if (
-                selectedPaguthi?.pagudhi && selectedPaguthi.pagudhi !== 'All'
-              ) {
-                return `Age Band Distribution for Paguthi ${selectedPaguthi.pagudhi}`;
-              } else {
-                return 'Age Band Distribution for All Data';
-              }
-            })()}
-          </Typography>
-          <Card sx={{ borderRadius: 4, boxShadow: '0 4px 24px rgba(0, 0, 0, 0.06)' }}>
-            <CardContent sx={{ p: 0 }}>
+        <Card sx={{ mt: 6, borderRadius: 4, boxShadow: '0 4px 24px rgba(0, 0, 0, 0.06)' }}>
+          <CardContent sx={{ p: 0 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 3, borderBottom: '1px solid #e2e8f0' }}>
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                {(() => {
+                  if (
+                    selectedBooth?.booth && selectedBooth.booth !== 'All'
+                  ) {
+                    return `Age Band Distribution for Booth ${selectedBooth.booth}`;
+                  } else if (
+                    selectedWard?.ward && selectedWard.ward !== 'All'
+                  ) {
+                    return `Age Band Distribution for Ward ${selectedWard.ward}`;
+                  } else if (
+                    selectedPaguthi?.pagudhi && selectedPaguthi.pagudhi !== 'All'
+                  ) {
+                    return `Age Band Distribution for Paguthi ${selectedPaguthi.pagudhi}`;
+                  } else {
+                    return 'Age Band Distribution for All Data';
+                  }
+                })()}
+              </Typography>
+              <Button
+                variant="contained"
+                startIcon={<ImageIcon />}
+                sx={{ background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)', textTransform: 'none' }}
+                onClick={async () => {
+                  const elem = document.getElementById('age-band-table-container');
+                  if (!elem) return;
+                  try {
+                    const dataUrl = await htmlToImage.toPng(elem, { backgroundColor: '#fff' });
+                    const link = document.createElement('a');
+                    link.href = dataUrl;
+                    link.download = 'age_band_table.png';
+                    link.click();
+                  } catch (err) {
+                    alert('Failed to download image. Some browser security settings or cross-origin stylesheets may prevent this.');
+                  }
+                }}
+              >
+                Download Image
+              </Button>
+            </Box>
+            <div id="age-band-table-container">
               {ageBandLoading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
                   <CircularProgress />
@@ -654,29 +725,26 @@ export default function Elections2026Page() {
                   <Table size="small" stickyHeader sx={{ minWidth: '600px' }}>
                     <TableHead>
                       <TableRow sx={{ background: '#f8fafc' }}>
-                        <TableCell sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5 }}>Age Band</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5 }}>Male (Count)</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5 }}>Female (Count)</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5 }}>Total</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5 }}>Percentage</TableCell>
+                        <TableCell sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, cursor: 'pointer', '&:hover': { background: '#e0e8f0' } }} onClick={() => handleAgeBandSort('age_band')}>{ageBandSortBy === 'age_band' ? `Age Band ${ageBandSortOrder === 'asc' ? '↑' : '↓'}` : 'Age Band'}</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, cursor: 'pointer', '&:hover': { background: '#e0e8f0' } }} onClick={() => handleAgeBandSort('male_count')}>{ageBandSortBy === 'male_count' ? `Male (Count) ${ageBandSortOrder === 'asc' ? '↑' : '↓'}` : 'Male (Count)'}</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, cursor: 'pointer', '&:hover': { background: '#e0e8f0' } }} onClick={() => handleAgeBandSort('female_count')}>{ageBandSortBy === 'female_count' ? `Female (Count) ${ageBandSortOrder === 'asc' ? '↑' : '↓'}` : 'Female (Count)'}</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, cursor: 'pointer', '&:hover': { background: '#e0e8f0' } }} onClick={() => handleAgeBandSort('total_count')}>{ageBandSortBy === 'total_count' ? `Total ${ageBandSortOrder === 'asc' ? '↑' : '↓'}` : 'Total'}</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, cursor: 'pointer', '&:hover': { background: '#e0e8f0' } }} onClick={() => handleAgeBandSort('percentage')}>{ageBandSortBy === 'percentage' ? `Percentage ${ageBandSortOrder === 'asc' ? '↑' : '↓'}` : 'Percentage'}</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       {(() => {
-                        // Calculate grand total once for all rows
-                        const grandTotal = ageBandData.reduce((sum, r) => sum + Number(r.total_count), 0);
-                        return ageBandData.map((row, idx) => {
-                          const percent = grandTotal > 0 ? ((Number(row.total_count) / grandTotal) * 100).toFixed(2) : '0.00';
-                          return (
-                            <TableRow key={row.age_band}>
-                              <TableCell>{row.age_band}</TableCell>
-                              <TableCell align="right">{row.male_count}</TableCell>
-                              <TableCell align="right">{row.female_count}</TableCell>
-                              <TableCell align="right">{row.total_count}</TableCell>
-                              <TableCell align="right">{percent}%</TableCell>
-                            </TableRow>
-                          );
-                        });
+                        // Get sorted data for display
+                        const sortedData = getSortedAgeBandData();
+                        return sortedData.map((row, idx) => (
+                          <TableRow key={row.age_band}>
+                            <TableCell>{row.age_band}</TableCell>
+                            <TableCell align="right">{row.male_count}</TableCell>
+                            <TableCell align="right">{row.female_count}</TableCell>
+                            <TableCell align="right">{row.total_count}</TableCell>
+                            <TableCell align="right">{row.percentage.toFixed(2)}%</TableCell>
+                          </TableRow>
+                        ));
                       })()}
                       {/* Summary Row */}
                       {ageBandData.length > 0 && (() => {
@@ -697,9 +765,9 @@ export default function Elections2026Page() {
                   </Table>
                 </TableContainer>
               )}
-            </CardContent>
-          </Card>
-        </Box>
+            </div>
+          </CardContent>
+        </Card>
       </Box>
     </Box>
   );

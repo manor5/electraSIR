@@ -356,8 +356,10 @@ export async function getStreetWiseElectors(booth?: string, ward?: string, pagud
         swe.ward,
         swe.pagudhi,
         swe.section_name,
-        swe.total_electors
+        swe.total_electors,
+        COALESCE(ps.polling_station, 'N/A') as polling_station
       FROM street_wise_electors swe
+      LEFT JOIN polling_station ps ON swe.booth = ps.booth
       WHERE 1=1
     `;
     const params: (string | number)[] = [];

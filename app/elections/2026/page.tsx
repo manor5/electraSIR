@@ -49,6 +49,7 @@ interface StreetWiseElectorData {
   pagudhi: string;
   section_name: string;
   total_electors: number;
+  polling_station: string;
 }
 
 interface Booth {
@@ -109,7 +110,7 @@ export default function Elections2026Page() {
   const [ageBandSortOrder, setAgeBandSortOrder] = useState<'asc' | 'desc'>('asc');
 
   // State for street-wise table sorting
-  type StreetWiseSortKey = 'section_name' | 'total_electors' | 'booth' | 'ward' | 'pagudhi';
+  type StreetWiseSortKey = 'section_name' | 'total_electors' | 'booth' | 'ward' | 'pagudhi' | 'polling_station';
   const [streetWiseSortBy, setStreetWiseSortBy] = useState<StreetWiseSortKey>('section_name');
   const [streetWiseSortOrder, setStreetWiseSortOrder] = useState<'asc' | 'desc'>('asc');
 
@@ -537,6 +538,7 @@ export default function Elections2026Page() {
       'Paguthi',
       'Ward',
       'Booth',
+      'Polling Station',
       'Street / Section',
       'Total Electors',
     ];
@@ -546,6 +548,7 @@ export default function Elections2026Page() {
       row.pagudhi || 'N/A',
       row.ward || 'N/A',
       row.booth || 'N/A',
+      row.polling_station,
       row.section_name || 'N/A',
       row.total_electors,
     ]);
@@ -553,7 +556,7 @@ export default function Elections2026Page() {
     // Calculate summary row
     if (data.length > 0) {
       const grandTotal = data.reduce((sum, row) => sum + row.total_electors, 0);
-      const summaryRow = ['', '', '', '', 'TOTAL', grandTotal];
+      const summaryRow = ['', '', '', '', '', 'TOTAL', grandTotal];
       rows.push(summaryRow);
     }
 
@@ -1006,7 +1009,8 @@ export default function Elections2026Page() {
                       <TableCell sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, pl: 2, width: '50px' }}>S. No</TableCell>
                       <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, cursor: 'pointer', '&:hover': { background: '#e0e8f0' } }} onClick={() => handleStreetWiseSort('pagudhi')}>{streetWiseSortBy === 'pagudhi' ? `Paguthi ${streetWiseSortOrder === 'asc' ? '↑' : '↓'}` : 'Paguthi'}</TableCell>
                       <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, cursor: 'pointer', '&:hover': { background: '#e0e8f0' } }} onClick={() => handleStreetWiseSort('ward')}>{streetWiseSortBy === 'ward' ? `Ward ${streetWiseSortOrder === 'asc' ? '↑' : '↓'}` : 'Ward'}</TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, cursor: 'pointer', '&:hover': { background: '#e0e8f0' } }} onClick={() => handleStreetWiseSort('booth')}>{streetWiseSortBy === 'booth' ? `Booth ${streetWiseSortOrder === 'asc' ? '↑' : '↓'}` : 'Booth'}</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, pr: 4, cursor: 'pointer', '&:hover': { background: '#e0e8f0' } }} onClick={() => handleStreetWiseSort('booth')}>{streetWiseSortBy === 'booth' ? `Booth ${streetWiseSortOrder === 'asc' ? '↑' : '↓'}` : 'Booth'}</TableCell>
+                      <TableCell sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, pl: 4, cursor: 'pointer', '&:hover': { background: '#e0e8f0' } }} onClick={() => handleStreetWiseSort('polling_station')}>{streetWiseSortBy === 'polling_station' ? `Polling Station ${streetWiseSortOrder === 'asc' ? '↑' : '↓'}` : 'Polling Station'}</TableCell>
                       <TableCell sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, cursor: 'pointer', '&:hover': { background: '#e0e8f0' } }} onClick={() => handleStreetWiseSort('section_name')}>{streetWiseSortBy === 'section_name' ? `Street / Section ${streetWiseSortOrder === 'asc' ? '↑' : '↓'}` : 'Street / Section'}</TableCell>
                       <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, pr: 2, cursor: 'pointer', '&:hover': { background: '#e0e8f0' } }} onClick={() => handleStreetWiseSort('total_electors')}>{streetWiseSortBy === 'total_electors' ? `Total Electors ${streetWiseSortOrder === 'asc' ? '↑' : '↓'}` : 'Total Electors'}</TableCell>
                     </TableRow>
@@ -1017,7 +1021,8 @@ export default function Elections2026Page() {
                         <TableCell align="center" sx={{ py: 0.5, px: 0.5, pl: 2, fontWeight: 600, width: '50px' }}>{idx + 1}</TableCell>
                         <TableCell align="right" sx={{ py: 0.5, px: 0.5 }}>{row.pagudhi}</TableCell>
                         <TableCell align="right" sx={{ py: 0.5, px: 0.5 }}>{row.ward}</TableCell>
-                        <TableCell align="right" sx={{ py: 0.5, px: 0.5 }}>{row.booth}</TableCell>
+                        <TableCell align="right" sx={{ py: 0.5, px: 0.5, pr: 4 }}>{row.booth}</TableCell>
+                        <TableCell sx={{ py: 0.5, px: 0.5, pl: 4 }}>{row.polling_station}</TableCell>
                         <TableCell sx={{ py: 0.5, px: 0.5 }}>{row.section_name}</TableCell>
                         <TableCell align="right" sx={{ py: 0.5, px: 0.5, pr: 2, fontWeight: 600 }}>{row.total_electors}</TableCell>
                       </TableRow>
@@ -1027,7 +1032,7 @@ export default function Elections2026Page() {
                       const grandTotal = getSortedStreetWiseData().reduce((sum, row) => sum + Number(row.total_electors), 0);
                       return (
                         <TableRow sx={{ background: '#e8f0f7', fontWeight: 700, position: 'sticky', bottom: 0, zIndex: 10 }}>
-                          <TableCell sx={{ fontWeight: 700, pl: 2 }} colSpan={5}>TOTAL</TableCell>
+                          <TableCell sx={{ fontWeight: 700, pl: 2 }} colSpan={6}>TOTAL</TableCell>
                           <TableCell align="right" sx={{ fontWeight: 700, pr: 2 }}>{grandTotal}</TableCell>
                         </TableRow>
                       );

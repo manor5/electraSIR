@@ -84,6 +84,7 @@ export default function Elections2026Page() {
 
   const [streetWiseData, setStreetWiseData] = useState<StreetWiseElectorData[]>([]);
   const [streetWiseLoading, setStreetWiseLoading] = useState(false);
+  const [streetSearch, setStreetSearch] = useState('');
 
   const [selectedBooth, setSelectedBooth] = useState<Booth | null>(null);
   const [selectedWard, setSelectedWard] = useState<Ward | null>(null);
@@ -389,9 +390,18 @@ export default function Elections2026Page() {
 
   // Street-wise sorting functions
   const getSortedStreetWiseData = () => {
-    if (!streetWiseSortBy) return streetWiseData;
+    let filtered = streetWiseData;
     
-    return [...streetWiseData].sort((a, b) => {
+    // Apply street search filter
+    if (streetSearch.trim() !== '') {
+      filtered = streetWiseData.filter((row) =>
+        row.section_name.toLowerCase().includes(streetSearch.toLowerCase())
+      );
+    }
+    
+    if (!streetWiseSortBy) return filtered;
+    
+    return [...filtered].sort((a, b) => {
       let aVal: string | number = a[streetWiseSortBy];
       let bVal: string | number = b[streetWiseSortBy];
       
@@ -948,14 +958,50 @@ export default function Elections2026Page() {
                 {downloading ? 'Downloading...' : 'Download CSV'}
               </Button>
             </Box>
+            
+            {/* Street Search Filter */}
+            <Box sx={{ p: 3, pb: 2, borderBottom: '1px solid #e2e8f0', backgroundColor: '#fafbfc' }}>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                <TextField
+                  placeholder="Search by street/section name..."
+                  value={streetSearch}
+                  onChange={(e) => setStreetSearch(e.target.value)}
+                  variant="outlined"
+                  size="small"
+                  sx={{ flex: 1 }}
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <Box sx={{ display: 'flex', alignItems: 'center', mr: 1, color: '#64748b' }}>
+                          🔍
+                        </Box>
+                      ),
+                    },
+                  }}
+                />
+                {streetSearch && (
+                  <Button
+                    variant="outlined"
+                    color="inherit"
+                    size="small"
+                    startIcon={<ClearIcon />}
+                    onClick={() => setStreetSearch('')}
+                  >
+                    Clear Search
+                  </Button>
+                )}
+              </Stack>
+            </Box>
+            
             {streetWiseLoading ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
                 <CircularProgress />
               </Box>
             ) : (
-              <TableContainer sx={{ maxHeight: '400px', overflowY: 'auto', overflowX: 'auto' }}>
-                <Table size="small" stickyHeader sx={{ minWidth: '700px' }}>
-                  <TableHead>
+              <>
+                <TableContainer sx={{ maxHeight: '400px', overflowY: 'auto', overflowX: 'auto' }}>
+                  <Table size="small" stickyHeader sx={{ minWidth: '700px' }}>
+                    <TableHead>
                     <TableRow sx={{ background: '#f8fafc' }}>
                       <TableCell sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, pl: 2, width: '50px' }}>S. No</TableCell>
                       <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, cursor: 'pointer', '&:hover': { background: '#e0e8f0' } }} onClick={() => handleStreetWiseSort('pagudhi')}>{streetWiseSortBy === 'pagudhi' ? `Paguthi ${streetWiseSortOrder === 'asc' ? '↑' : '↓'}` : 'Paguthi'}</TableCell>
@@ -977,8 +1023,8 @@ export default function Elections2026Page() {
                       </TableRow>
                     ))}
                     {/* Summary Row */}
-                    {streetWiseData.length > 0 && (() => {
-                      const grandTotal = streetWiseData.reduce((sum, row) => sum + Number(row.total_electors), 0);
+                    {getSortedStreetWiseData().length > 0 && (() => {
+                      const grandTotal = getSortedStreetWiseData().reduce((sum, row) => sum + Number(row.total_electors), 0);
                       return (
                         <TableRow sx={{ background: '#e8f0f7', fontWeight: 700, position: 'sticky', bottom: 0, zIndex: 10 }}>
                           <TableCell sx={{ fontWeight: 700, pl: 2 }} colSpan={5}>TOTAL</TableCell>
@@ -989,6 +1035,21 @@ export default function Elections2026Page() {
                   </TableBody>
                 </Table>
               </TableContainer>
+              {getSortedStreetWiseData().length === 0 && streetWiseData.length > 0 && (
+                <Box sx={{ textAlign: 'center', py: 6 }}>
+                  <Typography color="text.secondary">
+                    No streets found matching "{streetSearch}"
+                  </Typography>
+                </Box>
+              )}
+              {streetWiseData.length === 0 && !streetWiseLoading && (
+                <Box sx={{ textAlign: 'center', py: 6 }}>
+                  <Typography color="text.secondary">
+                    No data available for the selected filters
+                  </Typography>
+                </Box>
+              )}
+              </>
             )}
           </CardContent>
         </Card>

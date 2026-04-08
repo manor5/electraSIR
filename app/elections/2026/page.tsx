@@ -6,7 +6,6 @@ import {
   Card,
   CardContent,
   TextField,
-  Autocomplete,
   Table,
   TableBody,
   TableCell,
@@ -20,6 +19,8 @@ import {
   CircularProgress,
   Pagination,
   Alert,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
 import ImageIcon from '@mui/icons-material/Image';
@@ -467,8 +468,6 @@ export default function Elections2026Page() {
       'Male %',
       'Female Count',
       'Female %',
-      'Third Count',
-      'Third %',
       'Total',
     ];
 
@@ -485,8 +484,6 @@ export default function Elections2026Page() {
         malePercent,
         row.female_count,
         femalePercent,
-        row.third_count,
-        thirdPercent,
         row.total_count,
       ];
     });
@@ -619,54 +616,60 @@ export default function Elections2026Page() {
               </Typography>
 
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                <Autocomplete
+                <TextField
                   sx={{ flex: 1 }}
-                  options={paguthis}
-                  loading={boothsLoading}
-                  getOptionLabel={(option) => option.pagudhi || ''}
-                  value={selectedPaguthi}
-                  onChange={(_, value) => setSelectedPaguthi(value)}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Paguthi"
-                      placeholder="Select paguthi..."
-                    />
-                  )}
-                  noOptionsText="No paguthis found"
-                />
+                  select
+                  label="Paguthi"
+                  value={selectedPaguthi?.pagudhi || ''}
+                  onChange={(e) => {
+                    const selected = paguthis.find(p => p.pagudhi === e.target.value);
+                    setSelectedPaguthi(selected || null);
+                  }}
+                  disabled={boothsLoading}
+                >
+                  <MenuItem value="">Select paguthi...</MenuItem>
+                  {paguthis.map((option) => (
+                    <MenuItem key={option.pagudhi} value={option.pagudhi}>
+                      {option.pagudhi}
+                    </MenuItem>
+                  ))}
+                </TextField>
 
-                <Autocomplete
+                <TextField
                   sx={{ flex: 1 }}
-                  options={wards}
-                  getOptionLabel={(option) => option.ward || ''}
-                  value={selectedWard}
-                  onChange={(_, value) => setSelectedWard(value)}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Ward"
-                      placeholder="Select ward..."
-                    />
-                  )}
-                  noOptionsText="No wards found"
-                />
+                  select
+                  label="Ward"
+                  value={selectedWard?.ward || ''}
+                  onChange={(e) => {
+                    const selected = wards.find(w => w.ward === e.target.value);
+                    setSelectedWard(selected || null);
+                  }}
+                >
+                  <MenuItem value="">Select ward...</MenuItem>
+                  {wards.map((option) => (
+                    <MenuItem key={option.ward} value={option.ward}>
+                      {option.ward}
+                    </MenuItem>
+                  ))}
+                </TextField>
 
-                <Autocomplete
+                <TextField
                   sx={{ flex: 1 }}
-                  options={booths}
-                  getOptionLabel={(option) => option.booth || ''}
-                  value={selectedBooth}
-                  onChange={(_, value) => setSelectedBooth(value)}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Booth"
-                      placeholder="Select booth..."
-                    />
-                  )}
-                  noOptionsText="No booths found"
-                />
+                  select
+                  label="Booth"
+                  value={selectedBooth?.booth || ''}
+                  onChange={(e) => {
+                    const selected = booths.find(b => b.booth === e.target.value);
+                    setSelectedBooth(selected || null);
+                  }}
+                >
+                  <MenuItem value="">Select booth...</MenuItem>
+                  {booths.map((option) => (
+                    <MenuItem key={option.booth} value={option.booth}>
+                      {option.booth}
+                    </MenuItem>
+                  ))}
+                </TextField>
 
                 <Button
                   variant="outlined"
@@ -737,12 +740,6 @@ export default function Elections2026Page() {
                         <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '70px' }}>
                           Female (%)
                         </TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '80px', cursor: 'pointer', '&:hover': { background: '#e0e8f0' } }} onClick={() => handleSort('third_count')}>
-                          {sortBy === 'third_count' ? `Third (Count) ${sortOrder === 'asc' ? '↑' : '↓'}` : 'Third (Count)'}
-                        </TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '70px' }}>
-                          Third (%)
-                        </TableCell>
                         <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '70px', cursor: 'pointer', '&:hover': { background: '#e0e8f0' } }} onClick={() => handleSort('total_count')}>
                           {sortBy === 'total_count' ? `Total ${sortOrder === 'asc' ? '↑' : '↓'}` : 'Total'}
                         </TableCell>
@@ -770,8 +767,6 @@ export default function Elections2026Page() {
                             <TableCell align="right" sx={{ py: 0.5, px: 0.5, width: '70px' }}>{malePercent}%</TableCell>
                             <TableCell align="right" sx={{ py: 0.5, px: 0.5, width: '80px' }}>{row.female_count}</TableCell>
                             <TableCell align="right" sx={{ py: 0.5, px: 0.5, width: '70px' }}>{femalePercent}%</TableCell>
-                            <TableCell align="right" sx={{ py: 0.5, px: 0.5, width: '80px' }}>{row.third_count}</TableCell>
-                            <TableCell align="right" sx={{ py: 0.5, px: 0.5, width: '70px' }}>{thirdPercent}%</TableCell>
                             <TableCell align="right" sx={{ fontWeight: 600, py: 0.5, px: 0.5, pr: 2, width: '70px' }}>{row.total_count}</TableCell>
                           </TableRow>
                         );
@@ -804,8 +799,6 @@ export default function Elections2026Page() {
                             <TableCell align="right" sx={{ fontWeight: 700, py: 0.5, px: 0.5, width: '70px' }}>{malePercentOverall}%</TableCell>
                             <TableCell align="right" sx={{ fontWeight: 700, py: 0.5, px: 0.5, width: '80px' }}>{totalFemale}</TableCell>
                             <TableCell align="right" sx={{ fontWeight: 700, py: 0.5, px: 0.5, width: '70px' }}>{femalePercentOverall}%</TableCell>
-                            <TableCell align="right" sx={{ fontWeight: 700, py: 0.5, px: 0.5, width: '80px' }}>{totalThird}</TableCell>
-                            <TableCell align="right" sx={{ fontWeight: 700, py: 0.5, px: 0.5, width: '70px' }}>{thirdPercentOverall}%</TableCell>
                             <TableCell align="right" sx={{ fontWeight: 700, py: 0.5, px: 0.5, pr: 2, width: '70px' }}>{grandTotal}</TableCell>
                           </TableRow>
                         );

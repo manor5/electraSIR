@@ -459,6 +459,94 @@ export default function Elections2026Page() {
     return `${year}-${month}-${day}_${hours}-${minutes}-${seconds}`;
   };
 
+  const downloadPDF = (pdf: jsPDF, filename: string) => {
+    const blob = pdf.output('blob');
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const generateAgeBandDataPDF = (data: AgeBandAggregatedData[]) => {
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    let yPosition = 15;
+
+    // Add title
+    pdf.setFontSize(16);
+    pdf.text('Age Band Distribution', 15, yPosition);
+    yPosition += 10;
+
+    // Table headers
+    const headers = ['Age Band', 'Male Count', 'Female Count', 'Total', 'Percentage'];
+    const columnWidths = [40, 35, 35, 35, 35];
+    
+    // Add headers
+    pdf.setFontSize(10);
+    pdf.setFont('', 'bold');
+    let xPosition = 15;
+    headers.forEach((header, idx) => {
+      pdf.text(header, xPosition, yPosition);
+      xPosition += columnWidths[idx];
+    });
+    yPosition += 7;
+    pdf.setFont('', 'normal');
+
+    // Calculate grand total for percentage
+    const grandTotal = data.reduce((sum, row) => sum + Number(row.total_count), 0);
+
+    // Add data rows
+    data.forEach((row) => {
+      if (yPosition > pageHeight - 20) {
+        pdf.addPage();
+        yPosition = 15;
+      }
+
+      const percentage = grandTotal > 0 ? ((Number(row.total_count) / grandTotal) * 100).toFixed(2) : '0.00';
+      
+      const rowData = [
+        row.age_band,
+        Number(row.male_count).toString(),
+        Number(row.female_count).toString(),
+        Number(row.total_count).toString(),
+        percentage + '%',
+      ];
+
+      xPosition = 15;
+      rowData.forEach((cell, idx) => {
+        pdf.text(cell, xPosition, yPosition);
+        xPosition += columnWidths[idx];
+      });
+      yPosition += 7;
+    });
+
+    // Add summary row
+    if (data.length > 0) {
+      if (yPosition > pageHeight - 20) {
+        pdf.addPage();
+        yPosition = 15;
+      }
+
+      pdf.setFont('', 'bold');
+      const totalMale = data.reduce((sum, row) => sum + Number(row.male_count), 0);
+      const totalFemale = data.reduce((sum, row) => sum + Number(row.female_count), 0);
+
+      const summaryData = ['TOTAL', totalMale.toString(), totalFemale.toString(), grandTotal.toString(), '100%'];
+      
+      xPosition = 15;
+      summaryData.forEach((cell, idx) => {
+        pdf.text(cell, xPosition, yPosition);
+        xPosition += columnWidths[idx];
+      });
+    }
+
+    downloadPDF(pdf, `age_band_table_${getFormattedDateTime()}.pdf`);
+  };
+
   const handleDownload = async () => {
     setDownloading(true);
     try {
@@ -550,7 +638,7 @@ export default function Elections2026Page() {
       });
     }
 
-    pdf.save(`gender_wise_data_${getFormattedDateTime()}.pdf`);
+    downloadPDF(pdf, `gender_wise_data_${getFormattedDateTime()}.pdf`);
   };
 
   const generateStreetWiseDataPDF = (data: StreetWiseElectorData[]) => {
@@ -630,7 +718,7 @@ export default function Elections2026Page() {
       pdf.text(grandTotal.toString(), xPosition, yPosition);
     }
 
-    pdf.save(`street_wise_voter_count_${getFormattedDateTime()}.pdf`);
+    downloadPDF(pdf, `street_wise_voter_count_${getFormattedDateTime()}.pdf`);
   };
 
   const handleStreetWiseDownload = async () => {
@@ -919,20 +1007,7 @@ export default function Elections2026Page() {
                 variant="contained"
                 startIcon={<DownloadIcon />}
                 sx={{ background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)', textTransform: 'none' }}
-                onClick={async () => {
-                  const elem = document.getElementById('age-band-table-container');
-                  if (!elem) return;
-                  try {
-                    const dataUrl = await htmlToImage.toPng(elem, { backgroundColor: '#fff' });
-                    const pdf = new jsPDF('p', 'mm', 'a4');
-                    const imgWidth = 210;
-                    const imgHeight = (elem.scrollHeight * imgWidth) / elem.scrollWidth;
-                    pdf.addImage(dataUrl, 'PNG', 0, 0, imgWidth, imgHeight);
-                    pdf.save(`age_band_table_${getFormattedDateTime()}.pdf`);
-                  } catch (err) {
-                    alert('Failed to download PDF. Some browser security settings or cross-origin stylesheets may prevent this.');
-                  }
-                }}
+                onClick={() => generateAgeBandDataPDF(ageBandData)}
               >
                 Download PDF
               </Button>

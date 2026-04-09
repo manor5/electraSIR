@@ -939,35 +939,35 @@ export default function Elections2026Page() {
               </Box>
             ) : (
               <>
-                <TableContainer sx={{ maxHeight: '600px', overflowY: 'auto', overflowX: 'auto' }}>
-                  <Table size="small" stickyHeader sx={{ minWidth: '900px' }}>
+                <TableContainer sx={{ maxHeight: '600px', overflowY: 'auto', overflowX: 'auto', '@media (max-width: 768px)': { maxHeight: '500px' } }}>
+                  <Table size="small" stickyHeader sx={{ minWidth: '900px', '@media (max-width: 768px)': { minWidth: '600px' } }}>
                     <TableHead>
                       <TableRow sx={{ background: '#f8fafc' }}>
                         <TableCell sx={{ fontWeight: 700, background: '#f8fafc', width: '50px', py: 1, px: 0.5, pl: 2, '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3 } }}>
                           S. No
                         </TableCell>
-                        <TableCell sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '100px', cursor: 'pointer', '&:hover': { background: '#e0e8f0' }, '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3 } }} onClick={() => handleSort('pagudhi')}>
+                        <TableCell sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '80px', cursor: 'pointer', '&:hover': { background: '#e0e8f0' }, '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.7rem' } }} onClick={() => handleSort('pagudhi')}>
                           {sortBy === 'pagudhi' ? `Paguthi ${sortOrder === 'asc' ? '↑' : '↓'}` : 'Paguthi'}
                         </TableCell>
-                        <TableCell sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '45px', cursor: 'pointer', '&:hover': { background: '#e0e8f0' }, '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3 } }} onClick={() => handleSort('ward')}>
+                        <TableCell sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '35px', cursor: 'pointer', '&:hover': { background: '#e0e8f0' }, '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', py: 0.5, px: 0.2, width: '30px', fontSize: '0.65rem' } }} onClick={() => handleSort('ward')}>
                           {sortBy === 'ward' ? `Ward ${sortOrder === 'asc' ? '↑' : '↓'}` : 'Ward'}
                         </TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '45px', cursor: 'pointer', '&:hover': { background: '#e0e8f0' }, '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3 } }} onClick={() => handleSort('booth')}>
+                        <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '35px', cursor: 'pointer', '&:hover': { background: '#e0e8f0' }, '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', py: 0.5, px: 0.2, width: '30px', fontSize: '0.65rem' } }} onClick={() => handleSort('booth')}>
                           {sortBy === 'booth' ? `Booth ${sortOrder === 'asc' ? '↑' : '↓'}` : 'Booth'}
                         </TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '80px', cursor: 'pointer', '&:hover': { background: '#e0e8f0' }, '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.7rem' } }} onClick={() => handleSort('male_count')}>
-                          {sortBy === 'male_count' ? `Male (Count) ${sortOrder === 'asc' ? '↑' : '↓'}` : 'Male (Count)'}
+                        <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '60px', cursor: 'pointer', '&:hover': { background: '#e0e8f0' }, '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', py: 0.5, px: 0.2, width: '45px', fontSize: '0.65rem' } }} onClick={() => handleSort('male_count')}>
+                          {sortBy === 'male_count' ? `Male ${sortOrder === 'asc' ? '↑' : '↓'}` : 'Male'}
                         </TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '70px', '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.7rem' } }}>
-                          Male (%)
+                        <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '50px', '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', py: 0.5, px: 0.2, width: '40px', fontSize: '0.65rem' } }}>
+                          Male %
                         </TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '80px', cursor: 'pointer', '&:hover': { background: '#e0e8f0' }, '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.7rem' } }} onClick={() => handleSort('female_count')}>
-                          {sortBy === 'female_count' ? `Female (Count) ${sortOrder === 'asc' ? '↑' : '↓'}` : 'Female (Count)'}
+                        <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '60px', cursor: 'pointer', '&:hover': { background: '#e0e8f0' }, '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', py: 0.5, px: 0.2, width: '45px', fontSize: '0.65rem' } }} onClick={() => handleSort('female_count')}>
+                          {sortBy === 'female_count' ? `Female ${sortOrder === 'asc' ? '↑' : '↓'}` : 'Female'}
                         </TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '70px', '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.7rem' } }}>
-                          Female (%)
+                        <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '50px', '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', py: 0.5, px: 0.2, width: '40px', fontSize: '0.65rem' } }}>
+                          Female %
                         </TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '70px', cursor: 'pointer', '&:hover': { background: '#e0e8f0' }, '@media (max-width: 768px)': { px: 0.3, fontSize: '0.7rem' } }} onClick={() => handleSort('total_count')}>
+                        <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '50px', cursor: 'pointer', '&:hover': { background: '#e0e8f0' }, '@media (max-width: 768px)': { py: 0.5, px: 0.2, width: '40px', fontSize: '0.65rem' } }} onClick={() => handleSort('total_count')}>
                           {sortBy === 'total_count' ? `Total ${sortOrder === 'asc' ? '↑' : '↓'}` : 'Total'}
                         </TableCell>
                       </TableRow>
@@ -986,15 +986,15 @@ export default function Elections2026Page() {
                               '&:last-child td, &:last-child th': { border: 0 },
                             }}
                           >
-                            <TableCell align="center" sx={{ fontWeight: 600, width: '50px', py: 0.5, px: 0.5, '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.75rem' } }}>{index + 1}</TableCell>
-                            <TableCell sx={{ py: 0.5, px: 0.5, width: '100px', '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.75rem' } }}>{row.pagudhi || 'N/A'}</TableCell>
-                            <TableCell sx={{ py: 0.5, px: 0.5, width: '45px', '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.75rem' } }}>{row.ward || 'N/A'}</TableCell>
-                            <TableCell align="right" sx={{ py: 0.5, px: 0.5, width: '45px', '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.75rem' } }}>{row.booth || 'N/A'}</TableCell>
-                            <TableCell align="right" sx={{ py: 0.5, px: 0.5, width: '80px', '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.75rem' } }}>{row.male_count}</TableCell>
-                            <TableCell align="right" sx={{ py: 0.5, px: 0.5, width: '70px', '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.75rem' } }}>{malePercent}%</TableCell>
-                            <TableCell align="right" sx={{ py: 0.5, px: 0.5, width: '80px', '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.75rem' } }}>{row.female_count}</TableCell>
-                            <TableCell align="right" sx={{ py: 0.5, px: 0.5, width: '70px', '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.75rem' } }}>{femalePercent}%</TableCell>
-                            <TableCell align="right" sx={{ fontWeight: 600, py: 0.5, px: 0.5, pr: 2, width: '70px', '@media (max-width: 768px)': { px: 0.3, fontSize: '0.75rem' } }}>{row.total_count}</TableCell>
+                            <TableCell align="center" sx={{ fontWeight: 600, width: '50px', py: 0.5, px: 0.5, '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', py: 0.3, px: 0.2, width: '35px', fontSize: '0.65rem' } }}>{index + 1}</TableCell>
+                            <TableCell sx={{ py: 0.5, px: 0.5, width: '80px', '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', py: 0.3, px: 0.2, width: '50px', fontSize: '0.65rem' } }}>{row.pagudhi || 'N/A'}</TableCell>
+                            <TableCell sx={{ py: 0.5, px: 0.5, width: '35px', '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', py: 0.3, px: 0.2, width: '30px', fontSize: '0.65rem' } }}>{row.ward || 'N/A'}</TableCell>
+                            <TableCell align="right" sx={{ py: 0.5, px: 0.5, width: '35px', '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', py: 0.3, px: 0.2, width: '30px', fontSize: '0.65rem' } }}>{row.booth || 'N/A'}</TableCell>
+                            <TableCell align="right" sx={{ py: 0.5, px: 0.5, width: '60px', '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', py: 0.3, px: 0.2, width: '45px', fontSize: '0.65rem' } }}>{row.male_count}</TableCell>
+                            <TableCell align="right" sx={{ py: 0.5, px: 0.5, width: '50px', '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', py: 0.3, px: 0.2, width: '40px', fontSize: '0.65rem' } }}>{malePercent}%</TableCell>
+                            <TableCell align="right" sx={{ py: 0.5, px: 0.5, width: '60px', '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', py: 0.3, px: 0.2, width: '45px', fontSize: '0.65rem' } }}>{row.female_count}</TableCell>
+                            <TableCell align="right" sx={{ py: 0.5, px: 0.5, width: '50px', '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', py: 0.3, px: 0.2, width: '40px', fontSize: '0.65rem' } }}>{femalePercent}%</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 600, py: 0.5, px: 0.5, pr: 2, width: '50px', '@media (max-width: 768px)': { py: 0.3, px: 0.2, width: '40px', fontSize: '0.65rem' } }}>{row.total_count}</TableCell>
                           </TableRow>
                         );
                       })}
@@ -1022,11 +1022,11 @@ export default function Elections2026Page() {
                           >
                             <TableCell align="center" sx={{ fontWeight: 700, py: 0.5, px: 0.5, pl: 2, width: '50px', '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.75rem' } }}>-</TableCell>
                             <TableCell colSpan={3} sx={{ fontWeight: 700, py: 0.5, px: 0.5, '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.75rem' } }}>TOTAL</TableCell>
-                            <TableCell align="right" sx={{ fontWeight: 700, py: 0.5, px: 0.5, width: '80px', '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.75rem' } }}>{totalMale}</TableCell>
-                            <TableCell align="right" sx={{ fontWeight: 700, py: 0.5, px: 0.5, width: '70px', '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.75rem' } }}>{malePercentOverall}%</TableCell>
-                            <TableCell align="right" sx={{ fontWeight: 700, py: 0.5, px: 0.5, width: '80px', '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.75rem' } }}>{totalFemale}</TableCell>
-                            <TableCell align="right" sx={{ fontWeight: 700, py: 0.5, px: 0.5, width: '70px', '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.75rem' } }}>{femalePercentOverall}%</TableCell>
-                            <TableCell align="right" sx={{ fontWeight: 700, py: 0.5, px: 0.5, pr: 2, width: '70px', '@media (max-width: 768px)': { px: 0.3, fontSize: '0.75rem' } }}>{grandTotal}</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 700, py: 0.5, px: 0.5, width: '50px', '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.75rem' } }}>{totalMale}</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 700, py: 0.5, px: 0.5, width: '50px', '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.75rem' } }}>{malePercentOverall}%</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 700, py: 0.5, px: 0.5, width: '60px', '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.75rem' } }}>{totalFemale}</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 700, py: 0.5, px: 0.5, width: '50px', '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.75rem' } }}>{femalePercentOverall}%</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 700, py: 0.5, px: 0.5, pr: 2, width: '50px', '@media (max-width: 768px)': { px: 0.3, fontSize: '0.75rem' } }}>{grandTotal}</TableCell>
                           </TableRow>
                         );
                       })()}
@@ -1088,14 +1088,14 @@ export default function Elections2026Page() {
                   <CircularProgress />
                 </Box>
               ) : (
-                <TableContainer sx={{ maxHeight: '400px', overflowY: 'auto', overflowX: 'auto' }}>
-                  <Table size="small" stickyHeader sx={{ minWidth: '600px' }}>
+                <TableContainer sx={{ maxHeight: '400px', overflowY: 'auto', overflowX: 'auto', '@media (max-width: 768px)': { maxHeight: '350px' } }}>
+                  <Table size="small" stickyHeader sx={{ minWidth: '600px', '@media (max-width: 768px)': { minWidth: '450px' } }}>
                     <TableHead>
                       <TableRow sx={{ background: '#f8fafc' }}>
                         <TableCell sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, pl: 2, cursor: 'pointer', '&:hover': { background: '#e0e8f0' }, '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.7rem' } }} onClick={() => handleAgeBandSort('age_band')}>{ageBandSortBy === 'age_band' ? `Age Band ${ageBandSortOrder === 'asc' ? '↑' : '↓'}` : 'Age Band'}</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, cursor: 'pointer', '&:hover': { background: '#e0e8f0' }, '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.7rem' } }} onClick={() => handleAgeBandSort('male_count')}>{ageBandSortBy === 'male_count' ? `Male (Count) ${ageBandSortOrder === 'asc' ? '↑' : '↓'}` : 'Male (Count)'}</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, cursor: 'pointer', '&:hover': { background: '#e0e8f0' }, '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.7rem' } }} onClick={() => handleAgeBandSort('female_count')}>{ageBandSortBy === 'female_count' ? `Female (Count) ${ageBandSortOrder === 'asc' ? '↑' : '↓'}` : 'Female (Count)'}</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, cursor: 'pointer', '&:hover': { background: '#e0e8f0' }, '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.7rem' } }} onClick={() => handleAgeBandSort('total_count')}>{ageBandSortBy === 'total_count' ? `Total ${ageBandSortOrder === 'asc' ? '↑' : '↓'}` : 'Total'}</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '50px', cursor: 'pointer', '&:hover': { background: '#e0e8f0' }, '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.7rem' } }} onClick={() => handleAgeBandSort('male_count')}>{ageBandSortBy === 'male_count' ? `Male ${ageBandSortOrder === 'asc' ? '↑' : '↓'}` : 'Male'}</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '50px', cursor: 'pointer', '&:hover': { background: '#e0e8f0' }, '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.7rem' } }} onClick={() => handleAgeBandSort('female_count')}>{ageBandSortBy === 'female_count' ? `Female ${ageBandSortOrder === 'asc' ? '↑' : '↓'}` : 'Female'}</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '50px', cursor: 'pointer', '&:hover': { background: '#e0e8f0' }, '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.7rem' } }} onClick={() => handleAgeBandSort('total_count')}>{ageBandSortBy === 'total_count' ? `Total ${ageBandSortOrder === 'asc' ? '↑' : '↓'}` : 'Total'}</TableCell>
                         <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, pr: 2, cursor: 'pointer', '&:hover': { background: '#e0e8f0' }, '@media (max-width: 768px)': { px: 0.3, fontSize: '0.7rem' } }} onClick={() => handleAgeBandSort('percentage')}>{ageBandSortBy === 'percentage' ? `Percentage ${ageBandSortOrder === 'asc' ? '↑' : '↓'}` : 'Percentage'}</TableCell>
                       </TableRow>
                     </TableHead>
@@ -1106,10 +1106,10 @@ export default function Elections2026Page() {
                         return sortedData.map((row, idx) => (
                           <TableRow key={row.age_band}>
                             <TableCell sx={{ pl: 2, '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', pl: 1, pr: 0.3, fontSize: '0.75rem' } }}>{row.age_band}</TableCell>
-                            <TableCell align="right" sx={{ '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.75rem' } }}>{row.male_count}</TableCell>
-                            <TableCell align="right" sx={{ '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.75rem' } }}>{row.female_count}</TableCell>
-                            <TableCell align="right" sx={{ '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.75rem' } }}>{row.total_count}</TableCell>
-                            <TableCell align="right" sx={{ pr: 2, '@media (max-width: 768px)': { pr: 0.3, fontSize: '0.75rem' } }}>{row.percentage.toFixed(2)}%</TableCell>
+                            <TableCell align="right" sx={{ '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.75rem' }, width: '50px' }}>{row.male_count}</TableCell>
+                            <TableCell align="right" sx={{ '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.75rem' }, width: '50px' }}>{row.female_count}</TableCell>
+                            <TableCell align="right" sx={{ '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.75rem' }, width: '50px' }}>{row.total_count}</TableCell>
+                            <TableCell align="right" sx={{ pr: 2, '@media (max-width: 768px)': { pr: 0.3, fontSize: '0.75rem' }, width: '50px' }}>{row.percentage.toFixed(2)}%</TableCell>
                           </TableRow>
                         ));
                       })()}
@@ -1121,10 +1121,10 @@ export default function Elections2026Page() {
                         return (
                           <TableRow sx={{ background: '#e8f0f7', fontWeight: 700, position: 'sticky', bottom: 0, zIndex: 10 }}>
                             <TableCell sx={{ fontWeight: 700, pl: 2, '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', pl: 1, pr: 0.3, fontSize: '0.75rem' } }}>TOTAL</TableCell>
-                            <TableCell align="right" sx={{ fontWeight: 700, '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.75rem' } }}>{totalMale}</TableCell>
-                            <TableCell align="right" sx={{ fontWeight: 700, '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.75rem' } }}>{totalFemale}</TableCell>
-                            <TableCell align="right" sx={{ fontWeight: 700, '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.75rem' } }}>{grandTotal}</TableCell>
-                            <TableCell align="right" sx={{ fontWeight: 700, pr: 2, '@media (max-width: 768px)': { pr: 0.3, fontSize: '0.75rem' } }}>100%</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 700, '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.75rem' }, width: '50px' }}>{totalMale}</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 700, '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.75rem' }, width: '50px' }}>{totalFemale}</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 700, '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.75rem' }, width: '50px' }}>{grandTotal}</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 700, pr: 2, '@media (max-width: 768px)': { pr: 0.3, fontSize: '0.75rem' }, width: '50px' }}>100%</TableCell>
                           </TableRow>
                         );
                       })()}
@@ -1213,8 +1213,8 @@ export default function Elections2026Page() {
               </Box>
             ) : (
               <>
-                <TableContainer sx={{ maxHeight: '400px', overflowY: 'auto', overflowX: 'auto' }}>
-                  <Table size="small" stickyHeader sx={{ minWidth: '700px' }}>
+                <TableContainer sx={{ maxHeight: '400px', overflowY: 'auto', overflowX: 'auto', '@media (max-width: 768px)': { maxHeight: '350px' } }}>
+                  <Table size="small" stickyHeader sx={{ minWidth: '700px', '@media (max-width: 768px)': { minWidth: '500px' } }}>
                     <TableHead>
                     <TableRow sx={{ background: '#f8fafc' }}>
                       <TableCell sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, pl: 2, width: '50px', '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.7rem' } }}>S. No</TableCell>

@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SIR Portal - Electra",
+  title: "Trichy West Constituency",
   description: "State Incident Report Portal by Electra",
 };
 

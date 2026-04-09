@@ -26,6 +26,7 @@ import DownloadIcon from '@mui/icons-material/Download';
 import ImageIcon from '@mui/icons-material/Image';
 import ClearIcon from '@mui/icons-material/Clear';
 import * as htmlToImage from 'html-to-image';
+import { jsPDF } from 'jspdf';
 import {
   getPaguthis,
   getWardsByPaguthi,
@@ -447,49 +448,91 @@ export default function Elections2026Page() {
     setStreetWiseLoading(false);
   };
 
+  const getFormattedDateTime = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    return `${year}-${month}-${day}_${hours}-${minutes}-${seconds}`;
+  };
+
   const handleDownload = async () => {
     setDownloading(true);
     try {
-      // Generate CSV from current genderData
-      const csv = generateCSV(genderData);
-      downloadCSV(csv, 'gender_wise_data.csv');
+      // Generate PDF from current genderData
+      await generateGenderDataPDF(genderData);
     } catch (err) {
       setError('Error downloading data');
     }
     setDownloading(false);
   };
 
-  const generateCSV = (data: GenderAggregatedData[]) => {
-    const headers = [
-      'Paguthi',
-      'Ward',
-      'Booth',
-      'Male Count',
-      'Male %',
-      'Female Count',
-      'Female %',
-      'Total',
-    ];
+  const generateGenderDataPDF = async (data: GenderAggregatedData[]) => {
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    let yPosition = 15;
 
-    const rows = data.map((row) => {
+    // Add title
+    pdf.setFontSize(16);
+    pdf.text('Gender Wise Data', 15, yPosition);
+    yPosition += 10;
+
+    // Table headers
+    const headers = ['Paguthi', 'Ward', 'Booth', 'Male Count', 'Male %', 'Female Count', 'Female %', 'Total'];
+    const columnWidths = [25, 20, 20, 22, 18, 25, 18, 22];
+    
+    // Add headers
+    pdf.setFontSize(10);
+    pdf.setFont('', 'bold');
+    let xPosition = 15;
+    headers.forEach((header, idx) => {
+      pdf.text(header, xPosition, yPosition);
+      xPosition += columnWidths[idx];
+    });
+    yPosition += 7;
+    pdf.setFont('', 'normal');
+
+    // Add data rows
+    data.forEach((row) => {
+      if (yPosition > pageHeight - 20) {
+        pdf.addPage();
+        yPosition = 15;
+      }
+
       const malePercent = row.total_count > 0 ? ((row.male_count / row.total_count) * 100).toFixed(2) : '0.00';
       const femalePercent = row.total_count > 0 ? ((row.female_count / row.total_count) * 100).toFixed(2) : '0.00';
-      const thirdPercent = row.total_count > 0 ? ((row.third_count / row.total_count) * 100).toFixed(2) : '0.00';
-
-      return [
+      
+      const rowData = [
         row.pagudhi || 'N/A',
         row.ward || 'N/A',
         row.booth || 'N/A',
-        row.male_count,
-        malePercent,
-        row.female_count,
-        femalePercent,
-        row.total_count,
+        row.male_count.toString(),
+        malePercent + '%',
+        row.female_count.toString(),
+        femalePercent + '%',
+        row.total_count.toString(),
       ];
+
+      xPosition = 15;
+      rowData.forEach((cell, idx) => {
+        pdf.text(cell, xPosition, yPosition);
+        xPosition += columnWidths[idx];
+      });
+      yPosition += 7;
     });
 
-    // Calculate summary row
+    // Add summary row
     if (data.length > 0) {
+      if (yPosition > pageHeight - 20) {
+        pdf.addPage();
+        yPosition = 15;
+      }
+
+      pdf.setFont('', 'bold');
       const totalMale = data.reduce((sum, row) => sum + row.male_count, 0);
       const totalFemale = data.reduce((sum, row) => sum + row.female_count, 0);
       const totalThird = data.reduce((sum, row) => sum + row.third_count, 0);
@@ -497,74 +540,103 @@ export default function Elections2026Page() {
 
       const malePercentOverall = grandTotal > 0 ? ((totalMale / grandTotal) * 100).toFixed(2) : '0.00';
       const femalePercentOverall = grandTotal > 0 ? ((totalFemale / grandTotal) * 100).toFixed(2) : '0.00';
-      const thirdPercentOverall = grandTotal > 0 ? ((totalThird / grandTotal) * 100).toFixed(2) : '0.00';
 
-      const summaryRow = [
-        'TOTAL',
-        '',
-        '',
-        totalMale,
-        malePercentOverall,
-        totalFemale,
-        femalePercentOverall,
-        totalThird,
-        thirdPercentOverall,
-        grandTotal,
+      const summaryData = ['TOTAL', '', '', totalMale.toString(), malePercentOverall + '%', totalFemale.toString(), femalePercentOverall + '%', grandTotal.toString()];
+      
+      xPosition = 15;
+      summaryData.forEach((cell, idx) => {
+        pdf.text(cell, xPosition, yPosition);
+        xPosition += columnWidths[idx];
+      });
+    }
+
+    pdf.save(`gender_wise_data_${getFormattedDateTime()}.pdf`);
+  };
+
+  const generateStreetWiseDataPDF = (data: StreetWiseElectorData[]) => {
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    let yPosition = 15;
+
+    // Add title
+    pdf.setFontSize(16);
+    pdf.text('Street Wise Voter Count', 15, yPosition);
+    yPosition += 10;
+
+    // Table headers
+    const headers = ['S. No', 'Paguthi', 'Ward', 'Booth', 'Polling Station', 'Street / Section', 'Total Electors'];
+    const columnWidths = [15, 25, 20, 20, 35, 40, 25];
+    
+    // Add headers
+    pdf.setFontSize(9);
+    pdf.setFont('', 'bold');
+    let xPosition = 12;
+    headers.forEach((header, idx) => {
+      pdf.text(header, xPosition, yPosition);
+      xPosition += columnWidths[idx];
+    });
+    yPosition += 7;
+    pdf.setFont('', 'normal');
+    pdf.setFontSize(8);
+
+    // Add data rows
+    data.forEach((row, idx) => {
+      if (yPosition > pageHeight - 20) {
+        pdf.addPage();
+        yPosition = 15;
+      }
+
+      const rowData = [
+        (idx + 1).toString(),
+        row.pagudhi || 'N/A',
+        row.ward || 'N/A',
+        row.booth || 'N/A',
+        row.polling_station,
+        row.section_name || 'N/A',
+        row.total_electors.toString(),
       ];
-      rows.push(summaryRow);
-    }
 
-    return [headers, ...rows].map((row) => row.map((cell) => `"${cell}"`).join(',')).join('\n');
-  };
+      xPosition = 12;
+      rowData.forEach((cell, idx) => {
+        pdf.text(cell, xPosition, yPosition);
+        xPosition += columnWidths[idx];
+      });
+      yPosition += 6;
+    });
 
-  const downloadCSV = (csv: string, filename: string) => {
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', filename);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const generateStreetWiseCSV = (data: StreetWiseElectorData[]) => {
-    const headers = [
-      'S. No',
-      'Paguthi',
-      'Ward',
-      'Booth',
-      'Polling Station',
-      'Street / Section',
-      'Total Electors',
-    ];
-
-    const rows = data.map((row, idx) => [
-      idx + 1,
-      row.pagudhi || 'N/A',
-      row.ward || 'N/A',
-      row.booth || 'N/A',
-      row.polling_station,
-      row.section_name || 'N/A',
-      row.total_electors,
-    ]);
-
-    // Calculate summary row
+    // Add summary row
     if (data.length > 0) {
+      if (yPosition > pageHeight - 20) {
+        pdf.addPage();
+        yPosition = 15;
+      }
+
+      pdf.setFont('', 'bold');
       const grandTotal = data.reduce((sum, row) => sum + row.total_electors, 0);
-      const summaryRow = ['', '', '', '', '', 'TOTAL', grandTotal];
-      rows.push(summaryRow);
+      
+      xPosition = 12;
+      pdf.text('', xPosition, yPosition);
+      xPosition += columnWidths[0];
+      pdf.text('', xPosition, yPosition);
+      xPosition += columnWidths[1];
+      pdf.text('', xPosition, yPosition);
+      xPosition += columnWidths[2];
+      pdf.text('', xPosition, yPosition);
+      xPosition += columnWidths[3];
+      pdf.text('', xPosition, yPosition);
+      xPosition += columnWidths[4];
+      pdf.text('TOTAL', xPosition, yPosition);
+      xPosition += columnWidths[5];
+      pdf.text(grandTotal.toString(), xPosition, yPosition);
     }
 
-    return [headers, ...rows].map((row) => row.map((cell) => `"${cell}"`).join(',')).join('\n');
+    pdf.save(`street_wise_voter_count_${getFormattedDateTime()}.pdf`);
   };
 
   const handleStreetWiseDownload = async () => {
     setDownloading(true);
     try {
-      const csv = generateStreetWiseCSV(streetWiseData);
-      downloadCSV(csv, 'street_wise_voter_count.csv');
+      generateStreetWiseDataPDF(streetWiseData);
     } catch (err) {
       setError('Error downloading data');
     }
@@ -702,7 +774,7 @@ export default function Elections2026Page() {
                   textTransform: 'none',
                 }}
               >
-                {downloading ? 'Downloading...' : 'Download CSV'}
+                {downloading ? 'Downloading...' : 'Download PDF'}
               </Button>
             </Box>
 
@@ -845,23 +917,24 @@ export default function Elections2026Page() {
               </Typography>
               <Button
                 variant="contained"
-                startIcon={<ImageIcon />}
+                startIcon={<DownloadIcon />}
                 sx={{ background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)', textTransform: 'none' }}
                 onClick={async () => {
                   const elem = document.getElementById('age-band-table-container');
                   if (!elem) return;
                   try {
                     const dataUrl = await htmlToImage.toPng(elem, { backgroundColor: '#fff' });
-                    const link = document.createElement('a');
-                    link.href = dataUrl;
-                    link.download = 'age_band_table.png';
-                    link.click();
+                    const pdf = new jsPDF('p', 'mm', 'a4');
+                    const imgWidth = 210;
+                    const imgHeight = (elem.scrollHeight * imgWidth) / elem.scrollWidth;
+                    pdf.addImage(dataUrl, 'PNG', 0, 0, imgWidth, imgHeight);
+                    pdf.save(`age_band_table_${getFormattedDateTime()}.pdf`);
                   } catch (err) {
-                    alert('Failed to download image. Some browser security settings or cross-origin stylesheets may prevent this.');
+                    alert('Failed to download PDF. Some browser security settings or cross-origin stylesheets may prevent this.');
                   }
                 }}
               >
-                Download Image
+                Download PDF
               </Button>
             </Box>
             <div id="age-band-table-container">
@@ -951,7 +1024,7 @@ export default function Elections2026Page() {
                   textTransform: 'none',
                 }}
               >
-                {downloading ? 'Downloading...' : 'Download CSV'}
+                {downloading ? 'Downloading...' : 'Download PDF'}
               </Button>
             </Box>
             

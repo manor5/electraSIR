@@ -474,7 +474,16 @@ export default function Elections2026Page() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to download PDF');
+        // Try to parse error response
+        let errorMessage = 'Failed to download PDF';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.details || errorData.error || errorMessage;
+        } catch (e) {
+          // Response was not JSON, use status text
+          errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
       }
 
       const blob = await response.blob();
@@ -501,8 +510,9 @@ export default function Elections2026Page() {
         window.URL.revokeObjectURL(url);
       }, 100);
     } catch (err) {
-      console.error('Error downloading PDF from backend:', err);
-      setError('Error downloading PDF');
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error downloading PDF';
+      console.error('Error downloading PDF from backend:', errorMessage);
+      setError(errorMessage);
     }
   };
 

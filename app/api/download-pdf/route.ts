@@ -34,14 +34,14 @@ const generateGenderDataPDF = (data: any): Buffer => {
 
   // Add headers
   pdf.setFontSize(10);
-  pdf.setFont('', 'bold');
+  pdf.setFont('helvetica', 'bold');
   let xPosition = 15;
   headers.forEach((header, idx) => {
     pdf.text(header, xPosition, yPosition);
     xPosition += columnWidths[idx];
   });
   yPosition += 7;
-  pdf.setFont('', 'normal');
+  pdf.setFont('helvetica', 'normal');
 
   // Add data rows
   data.forEach((row: any) => {
@@ -79,7 +79,7 @@ const generateGenderDataPDF = (data: any): Buffer => {
       yPosition = 15;
     }
 
-    pdf.setFont('', 'bold');
+    pdf.setFont('helvetica', 'bold');
     const totalMale = data.reduce((sum: number, row: any) => sum + row.male_count, 0);
     const totalFemale = data.reduce((sum: number, row: any) => sum + row.female_count, 0);
     const totalThird = data.reduce((sum: number, row: any) => sum + row.third_count, 0);
@@ -116,14 +116,14 @@ const generateAgeBandDataPDF = (data: any): Buffer => {
 
   // Add headers
   pdf.setFontSize(10);
-  pdf.setFont('', 'bold');
+  pdf.setFont('helvetica', 'bold');
   let xPosition = 15;
   headers.forEach((header, idx) => {
     pdf.text(header, xPosition, yPosition);
     xPosition += columnWidths[idx];
   });
   yPosition += 7;
-  pdf.setFont('', 'normal');
+  pdf.setFont('helvetica', 'normal');
 
   // Calculate grand total for percentage
   const grandTotal = data.reduce((sum: number, row: any) => sum + Number(row.total_count), 0);
@@ -160,7 +160,7 @@ const generateAgeBandDataPDF = (data: any): Buffer => {
       yPosition = 15;
     }
 
-    pdf.setFont('', 'bold');
+    pdf.setFont('helvetica', 'bold');
     const totalMale = data.reduce((sum: number, row: any) => sum + Number(row.male_count), 0);
     const totalFemale = data.reduce((sum: number, row: any) => sum + Number(row.female_count), 0);
 
@@ -192,14 +192,14 @@ const generateStreetWiseDataPDF = (data: any): Buffer => {
 
   // Add headers
   pdf.setFontSize(9);
-  pdf.setFont('', 'bold');
+  pdf.setFont('helvetica', 'bold');
   let xPosition = 12;
   headers.forEach((header, idx) => {
     pdf.text(header, xPosition, yPosition);
     xPosition += columnWidths[idx];
   });
   yPosition += 7;
-  pdf.setFont('', 'normal');
+  pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(8);
 
   // Add data rows
@@ -210,19 +210,19 @@ const generateStreetWiseDataPDF = (data: any): Buffer => {
     }
 
     const rowData = [
-      (idx + 1).toString(),
-      row.pagudhi || 'N/A',
-      row.ward || 'N/A',
-      row.booth || 'N/A',
-      row.polling_station,
-      row.section_name || 'N/A',
-      row.total_electors.toString(),
+      String(idx + 1),
+      String(row.pagudhi || 'N/A'),
+      String(row.ward || 'N/A'),
+      String(row.booth || 'N/A'),
+      String(row.polling_station || 'N/A'),
+      String(row.section_name || 'N/A'),
+      String(row.total_electors || 0),
     ];
 
     xPosition = 12;
-    rowData.forEach((cell, idx) => {
-      pdf.text(cell, xPosition, yPosition);
-      xPosition += columnWidths[idx];
+    rowData.forEach((cell, cellIdx) => {
+      pdf.text(String(cell), xPosition, yPosition);
+      xPosition += columnWidths[cellIdx];
     });
     yPosition += 6;
   });
@@ -234,7 +234,7 @@ const generateStreetWiseDataPDF = (data: any): Buffer => {
       yPosition = 15;
     }
 
-    pdf.setFont('', 'bold');
+    pdf.setFont('helvetica', 'bold');
     const grandTotal = data.reduce((sum: number, row: any) => sum + row.total_electors, 0);
 
     xPosition = 12;
@@ -293,6 +293,8 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('PDF generation error:', error);
-    return NextResponse.json({ error: 'Failed to generate PDF' }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Error details:', errorMessage);
+    return NextResponse.json({ error: 'Failed to generate PDF', details: errorMessage }, { status: 500 });
   }
 }

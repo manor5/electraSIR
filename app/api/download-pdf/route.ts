@@ -188,27 +188,24 @@ const generateStreetWiseDataPDF = (data: any): Buffer => {
 
   // Table headers
   const headers = ['S. No', 'Paguthi', 'Ward', 'Booth', 'Polling Station', 'Street / Section', 'Total Electors'];
-  const columnWidths = [15, 25, 20, 20, 35, 40, 25];
+  const columnWidths = [15, 25, 20, 20, 30, 35, 25];
 
   // Add headers
   pdf.setFontSize(9);
   pdf.setFont('helvetica', 'bold');
   let xPosition = 12;
   headers.forEach((header, idx) => {
-    pdf.text(header, xPosition, yPosition);
+    // Wrap long headers
+    const wrappedHeader = pdf.splitTextToSize(header, columnWidths[idx] - 2);
+    pdf.text(wrappedHeader, xPosition, yPosition);
     xPosition += columnWidths[idx];
   });
-  yPosition += 7;
+  yPosition += 8;
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(8);
 
-  // Add data rows
+  // Add data rows with word wrapping for long text
   data.forEach((row: any, idx: number) => {
-    if (yPosition > pageHeight - 20) {
-      pdf.addPage();
-      yPosition = 15;
-    }
-
     const rowData = [
       String(idx + 1),
       String(row.pagudhi || 'N/A'),
@@ -219,17 +216,43 @@ const generateStreetWiseDataPDF = (data: any): Buffer => {
       String(row.total_electors || 0),
     ];
 
+    // Calculate row height needed (accounting for wrapped text in Polling Station and Street/Section columns)
+    const pollingStationLines = pdf.splitTextToSize(rowData[4], columnWidths[4] - 2).length;
+    const streetSectionLines = pdf.splitTextToSize(rowData[5], columnWidths[5] - 2).length;
+    const maxLines = Math.max(pollingStationLines, streetSectionLines, 1);
+    const rowHeight = maxLines * 3.5 + 1;
+
+    // Check if we need a new page
+    if (yPosition + rowHeight > pageHeight - 20) {
+      pdf.addPage();
+      yPosition = 15;
+    }
+
+    const startYPosition = yPosition;
     xPosition = 12;
-    rowData.forEach((cell, cellIdx) => {
-      pdf.text(String(cell), xPosition, yPosition);
-      xPosition += columnWidths[cellIdx];
-    });
-    yPosition += 6;
+
+    // Draw each cell
+    for (let colIdx = 0; colIdx < rowData.length; colIdx++) {
+      const cellText = rowData[colIdx];
+      
+      if (colIdx === 4 || colIdx === 5) {
+        // Wrap text for Polling Station and Street/Section columns
+        const wrappedText = pdf.splitTextToSize(cellText, columnWidths[colIdx] - 2);
+        pdf.text(wrappedText, xPosition + 1, startYPosition + 2);
+      } else {
+        // Single line for other columns
+        pdf.text(cellText, xPosition + 1, startYPosition + 2);
+      }
+      
+      xPosition += columnWidths[colIdx];
+    }
+
+    yPosition += rowHeight;
   });
 
   // Add summary row
   if (data.length > 0) {
-    if (yPosition > pageHeight - 20) {
+    if (yPosition + 7 > pageHeight - 20) {
       pdf.addPage();
       yPosition = 15;
     }
@@ -238,19 +261,15 @@ const generateStreetWiseDataPDF = (data: any): Buffer => {
     const grandTotal = data.reduce((sum: number, row: any) => sum + row.total_electors, 0);
 
     xPosition = 12;
-    pdf.text('', xPosition, yPosition);
-    xPosition += columnWidths[0];
-    pdf.text('', xPosition, yPosition);
-    xPosition += columnWidths[1];
-    pdf.text('', xPosition, yPosition);
-    xPosition += columnWidths[2];
-    pdf.text('', xPosition, yPosition);
-    xPosition += columnWidths[3];
-    pdf.text('', xPosition, yPosition);
-    xPosition += columnWidths[4];
-    pdf.text('TOTAL', xPosition, yPosition);
+    // Empty cells for S.No through Street/Section
+    for (let i = 0; i < 5; i++) {
+      xPosition += columnWidths[i];
+    }
+    // TOTAL label
+    pdf.text('TOTAL', xPosition + 1, yPosition);
     xPosition += columnWidths[5];
-    pdf.text(grandTotal.toString(), xPosition, yPosition);
+    // Grand total value
+    pdf.text(grandTotal.toString(), xPosition + 1, yPosition);
   }
 
   return Buffer.from(pdf.output('arraybuffer'));

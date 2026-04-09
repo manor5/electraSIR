@@ -1092,7 +1092,7 @@ export default function Elections2026Page() {
                   <Table size="small" stickyHeader sx={{ minWidth: '600px', '@media (max-width: 768px)': { minWidth: '450px' } }}>
                     <TableHead>
                       <TableRow sx={{ background: '#f8fafc' }}>
-                        <TableCell sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, pl: 2, cursor: 'pointer', '&:hover': { background: '#e0e8f0' }, '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, fontSize: '0.7rem' } }} onClick={() => handleAgeBandSort('age_band')}>{ageBandSortBy === 'age_band' ? `Age Band ${ageBandSortOrder === 'asc' ? '↑' : '↓'}` : 'Age Band'}</TableCell>
+                        <TableCell sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, pl: 2, cursor: 'pointer', '&:hover': { background: '#e0e8f0' }, '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.3, py: 0.5, width: '38px', fontSize: '0.65rem' } }} onClick={() => handleAgeBandSort('age_band')}>{ageBandSortBy === 'age_band' ? `Age Band ${ageBandSortOrder === 'asc' ? '↑' : '↓'}` : 'Age Band'}</TableCell>
                         <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '50px', cursor: 'pointer', '&:hover': { background: '#e0e8f0' }, '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', py: 0.5, px: 0.2, width: '38px', fontSize: '0.65rem' } }} onClick={() => handleAgeBandSort('male_count')}>{ageBandSortBy === 'male_count' ? `Male ${ageBandSortOrder === 'asc' ? '↑' : '↓'}` : 'Male'}</TableCell>
                         <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '50px', cursor: 'pointer', '&:hover': { background: '#e0e8f0' }, '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', py: 0.5, px: 0.2, width: '38px', fontSize: '0.65rem' } }} onClick={() => handleAgeBandSort('female_count')}>{ageBandSortBy === 'female_count' ? `Female ${ageBandSortOrder === 'asc' ? '↑' : '↓'}` : 'Female'}</TableCell>
                         <TableCell align="right" sx={{ fontWeight: 700, background: '#f8fafc', py: 1, px: 0.5, width: '50px', cursor: 'pointer', '&:hover': { background: '#e0e8f0' }, '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', py: 0.5, px: 0.2, width: '38px', fontSize: '0.65rem' } }} onClick={() => handleAgeBandSort('total_count')}>{ageBandSortBy === 'total_count' ? `Total ${ageBandSortOrder === 'asc' ? '↑' : '↓'}` : 'Total'}</TableCell>
@@ -1105,7 +1105,7 @@ export default function Elections2026Page() {
                         const sortedData = getSortedAgeBandData();
                         return sortedData.map((row, idx) => (
                           <TableRow key={row.age_band}>
-                            <TableCell sx={{ pl: 2, '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', pl: 0.3, pr: 0.2, py: 0.3, fontSize: '0.65rem' } }}>{row.age_band}</TableCell>
+                            <TableCell sx={{ pl: 2, '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', pl: 0.3, pr: 0.2, py: 0.3, width: '38px', fontSize: '0.65rem' } }}>{row.age_band}</TableCell>
                             <TableCell align="right" sx={{ '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.2, py: 0.3, width: '38px', fontSize: '0.65rem' }, width: '50px' }}>{row.male_count}</TableCell>
                             <TableCell align="right" sx={{ '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.2, py: 0.3, width: '38px', fontSize: '0.65rem' }, width: '50px' }}>{row.female_count}</TableCell>
                             <TableCell align="right" sx={{ '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.2, py: 0.3, width: '38px', fontSize: '0.65rem' }, width: '50px' }}>{row.total_count}</TableCell>
@@ -1120,7 +1120,7 @@ export default function Elections2026Page() {
                         const grandTotal = ageBandData.reduce((sum, row) => sum + Number(row.total_count), 0);
                         return (
                           <TableRow sx={{ background: '#e8f0f7', fontWeight: 700, position: 'sticky', bottom: 0, zIndex: 10 }}>
-                            <TableCell sx={{ fontWeight: 700, pl: 2, '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', pl: 0.3, pr: 0.2, py: 0.3, fontSize: '0.65rem' } }}>TOTAL</TableCell>
+                            <TableCell sx={{ fontWeight: 700, pl: 2, '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', pl: 0.3, pr: 0.2, py: 0.3, width: '38px', fontSize: '0.65rem' } }}>TOTAL</TableCell>
                             <TableCell align="right" sx={{ fontWeight: 700, '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.2, py: 0.3, width: '38px', fontSize: '0.65rem' }, width: '50px' }}>{totalMale}</TableCell>
                             <TableCell align="right" sx={{ fontWeight: 700, '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.2, py: 0.3, width: '38px', fontSize: '0.65rem' }, width: '50px' }}>{totalFemale}</TableCell>
                             <TableCell align="right" sx={{ fontWeight: 700, '@media (max-width: 768px)': { borderRight: '1px solid #e2e8f0', px: 0.2, py: 0.3, width: '38px', fontSize: '0.65rem' }, width: '50px' }}>{grandTotal}</TableCell>

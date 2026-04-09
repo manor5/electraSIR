@@ -440,10 +440,10 @@ export default function WardElectionsPage() {
               mb: 2,
             }}
           >
-            Ward: {wardFromRoute}
+            Trichy West Constituency - Pagudhi {selectedPaguthi?.pagudhi} - Ward {wardFromRoute}
           </Typography>
           <Typography variant="subtitle1" sx={{ color: '#64748b' }}>
-            Elector records for {wardFromRoute} ward - Select booth to view data
+            Select booth to view all three tables
           </Typography>
         </Box>
 

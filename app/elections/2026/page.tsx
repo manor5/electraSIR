@@ -460,15 +460,23 @@ export default function Elections2026Page() {
   };
 
   const downloadPDF = (pdf: jsPDF, filename: string) => {
-    const blob = pdf.output('blob');
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    // For better mobile support, use data URI approach
+    try {
+      const dataUri = pdf.output('dataurlstring');
+      const link = document.createElement('a');
+      link.href = dataUri;
+      link.download = filename;
+      document.body.appendChild(link);
+      
+      // Add small delay for mobile browser compatibility
+      setTimeout(() => {
+        link.click();
+        document.body.removeChild(link);
+      }, 100);
+    } catch (e) {
+      // Fallback to save method if data URI fails
+      pdf.save(filename);
+    }
   };
 
   const generateAgeBandDataPDF = (data: AgeBandAggregatedData[]) => {

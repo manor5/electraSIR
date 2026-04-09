@@ -104,7 +104,6 @@ export default function WardElectionsPage() {
   // Initialize based on ward from route
   useEffect(() => {
     const initializeWardPage = async () => {
-      setLoading(true);
       try {
         // Get all paguthis to find the one containing this ward
         const paguthisResult = await getPaguthis();
@@ -138,7 +137,11 @@ export default function WardElectionsPage() {
                 setSelectedBooth(allBooth);
               }
             }
+          } else {
+            setError('Ward not found');
           }
+        } else {
+          setError('Failed to load paguthis');
         }
       } catch (err) {
         setError('Failed to initialize ward page');

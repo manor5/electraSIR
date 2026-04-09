@@ -459,6 +459,54 @@ export default function Elections2026Page() {
     return `${year}-${month}-${day}_${hours}-${minutes}-${seconds}`;
   };
 
+  const downloadPDFFromBackend = async (pdfType: 'gender' | 'ageBand' | 'streetWise', data: any) => {
+    try {
+      const response = await fetch('/api/download-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: pdfType,
+          data: data,
+          timestamp: getFormattedDateTime(),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to download PDF');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // Extract filename from Content-Disposition header if available
+      const contentDisposition = response.headers.get('content-disposition');
+      let filename = 'download.pdf';
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+        if (filenameMatch && filenameMatch[1]) {
+          filename = filenameMatch[1];
+        }
+      }
+      
+      link.download = filename;
+      document.body.appendChild(link);
+      
+      setTimeout(() => {
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }, 100);
+    } catch (err) {
+      console.error('Error downloading PDF from backend:', err);
+      setError('Error downloading PDF');
+    }
+  };
+
+  // Keep client-side PDF generation as fallback
   const downloadPDF = (pdf: jsPDF, filename: string) => {
     // For better mobile support, use data URI approach
     try {
@@ -558,8 +606,8 @@ export default function Elections2026Page() {
   const handleDownload = async () => {
     setDownloading(true);
     try {
-      // Generate PDF from current genderData
-      await generateGenderDataPDF(genderData);
+      // Use backend API for reliable downloads
+      await downloadPDFFromBackend('gender', genderData);
     } catch (err) {
       setError('Error downloading data');
     }
@@ -732,7 +780,8 @@ export default function Elections2026Page() {
   const handleStreetWiseDownload = async () => {
     setDownloading(true);
     try {
-      generateStreetWiseDataPDF(streetWiseData);
+      // Use backend API for reliable downloads
+      await downloadPDFFromBackend('streetWise', streetWiseData);
     } catch (err) {
       setError('Error downloading data');
     }
@@ -1015,7 +1064,10 @@ export default function Elections2026Page() {
                 variant="contained"
                 startIcon={<DownloadIcon />}
                 sx={{ background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)', textTransform: 'none' }}
-                onClick={() => generateAgeBandDataPDF(ageBandData)}
+                onClick={() => {
+                  setDownloading(true);
+                  downloadPDFFromBackend('ageBand', ageBandData).finally(() => setDownloading(false));
+                }}
               >
                 Download PDF
               </Button>

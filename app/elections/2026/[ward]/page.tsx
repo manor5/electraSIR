@@ -108,7 +108,14 @@ export default function WardElectionsPage() {
         // Get all paguthis to find the one containing this ward
         const paguthisResult = await getPaguthis();
         if (paguthisResult.success) {
-          const allPaguthis = paguthisResult.data as Paguthi[];
+          let allPaguthis = paguthisResult.data as Paguthi[];
+          
+          // Sort paguthis so that "All" comes last - we want specific paguthis first
+          allPaguthis = allPaguthis.sort((a, b) => {
+            if (a.pagudhi === 'All') return 1;
+            if (b.pagudhi === 'All') return -1;
+            return a.pagudhi.localeCompare(b.pagudhi);
+          });
           
           // Try to find paguthi for this ward by checking each one
           let foundPaguthi: Paguthi | null = null;

@@ -8,6 +8,7 @@ export interface VoterRecord {
   name: string;
   ward: string;
   booth: string;
+  polling_station: string | null;
 }
 
 export async function searchByVoterId(voterId: string): Promise<{ success: boolean; data?: VoterRecord; error?: string }> {
@@ -17,13 +18,15 @@ export async function searchByVoterId(voterId: string): Promise<{ success: boole
   try {
     const result = await pool.query<VoterRecord>(
       `SELECT
-         voter_id,
-         serial_no,
-         name,
-         ward,
-         booth_id::TEXT AS booth
-       FROM electors_2026
-       WHERE UPPER(voter_id) = $1
+         e.voter_id,
+         e.serial_no,
+         e.name,
+         e.ward,
+         e.booth_id::TEXT AS booth,
+         ps.polling_station
+       FROM electors_2026 e
+       LEFT JOIN polling_stations ps ON e.booth_id::TEXT = ps.booth_no::TEXT
+       WHERE UPPER(e.voter_id) = $1
        LIMIT 1`,
       [trimmed]
     );

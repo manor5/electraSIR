@@ -158,6 +158,12 @@ export default function VoterSearchPage() {
           <ResultRow label="வரிசை எண்" value={record.serial_no} />
           <Divider sx={{ my: { xs: 2, sm: 2.5 } }} />
           <ResultRow label="வார்டு" value={record.ward} />
+          {record.polling_station && (
+            <>
+              <Divider sx={{ my: { xs: 2, sm: 2.5 } }} />
+              <ResultRow label="வாக்குச் சாலை" value={record.polling_station} />
+            </>
+          )}
         </Paper>
       )}
 

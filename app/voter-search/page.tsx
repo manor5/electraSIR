@@ -75,10 +75,12 @@ export default function VoterSearchPage() {
           mb: { xs: 3, sm: 4 },
           fontWeight: 700,
           color: '#3c4043',
-          fontSize: { xs: '1.8rem', sm: '2.4rem', md: '2.8rem' },
+          fontSize: { xs: '1.2rem', sm: '1.6rem', md: '2rem' },
+          textAlign: 'center',
+          lineHeight: 1.5,
         }}
       >
-        வாக்காளர் தேடல்
+        வாக்காளர் தேடல் - திருச்சி மேற்கு தொகுதி
       </Typography>
 
       {/* Search Bar */}

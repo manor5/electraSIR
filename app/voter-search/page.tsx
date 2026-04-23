@@ -203,6 +203,18 @@ export default function VoterSearchPage() {
           தேடலில் பிழை ஏற்பட்டது. மீண்டும் முயற்சிக்கவும்.
         </Typography>
       )}
+
+      <Typography
+        sx={{
+          mt: 'auto',
+          pt: 6,
+          fontSize: '0.75rem',
+          color: '#b0b4b8',
+          letterSpacing: '0.3px',
+        }}
+      >
+        Developed by Raja Sekar, Erode
+      </Typography>
     </Box>
   );
 }

@@ -179,7 +179,7 @@ export async function getElectionResults(filter: ResultFilter): Promise<{
       FROM election_results er
       LEFT JOIN constituency_regions cr ON er.constituency_name = cr.constituency_name
       WHERE 1=1 ${regionCondition}
-      ORDER BY er.constituency_name ASC
+      ORDER BY er.last_updated DESC NULLS LAST, er.constituency_name ASC
     `;
 
     const result = await pool.query<ElectionResult>(query);
